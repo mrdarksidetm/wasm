@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabase.JournalMode
 
-@Database(entities = [MessageEntity::class], version = 1, exportSchema = false)
+@Database(entities = [MessageEntity::class], version = 2, exportSchema = false)
 abstract class ChatDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
 
@@ -22,6 +22,7 @@ abstract class ChatDatabase : RoomDatabase() {
                     "chat_database"
                 )
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

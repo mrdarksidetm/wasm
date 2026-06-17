@@ -17,3 +17,16 @@
 
 ### Status
 - 100% Initial implementation and optimization completed.
+
+---
+
+## [0.2.0] - 2026-06-17
+### Added
+- ZIP file import capability: extracts chat transcripts and attached media from `.zip` export archives.
+- Media rendering support: Asynchronous downsampled image decoding using native Compose `produceState` and `BitmapFactory` to avoid UI blocking or OutOfMemory crashes.
+- File attachment indicator: Custom file attachment UI element for non-image files (e.g. documents, audio).
+- Attachment name tracking: Added `mediaName` to `MessageEntity` Room schema and bumped Database version to `2` with destructive migration fallback.
+- Redundant text suppression: Automatically hides the "(file attached)" placeholder text inside the chat bubble when the actual media is successfully loaded.
+
+### Status
+- 100% ZIP import and media rendering features implemented.

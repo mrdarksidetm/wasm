@@ -13,5 +13,6 @@ data class MessageEntity(
     val timestamp: String, // Format: "12/05/23, 14:45"
     val sender: String,    // The name as it appears in the text file
     val content: String,   // The actual message text
-    val isSystemMessage: Boolean = false // For messages like "Encryption" or "Missed Call"
+    val isSystemMessage: Boolean = false, // For messages like "Encryption" or "Missed Call"
+    val mediaName: String? = null // Filename of any attached media
 )
