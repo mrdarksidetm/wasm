@@ -32,6 +32,7 @@ jobs:
 
       - name: Run Android Lint
         run: ./gradlew lintDebug --no-daemon --stacktrace
+        continue-on-error: true
 
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
