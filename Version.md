@@ -168,3 +168,14 @@
 
 ### Status
 - 100% Diagnostics publishing and lintVital bypass completed.
+
+---
+
+## [0.3.8] - 2026-09-02
+### Fixed & Compatibility
+- **Material 3 Expressive Container Color Extensions**:
+  - Resolved compile-time Kotlin symbol resolution error (`Unresolved reference: surfaceContainerLow / surfaceContainerHighest`) in `app/src/main/java/com/mrdartsidetm/wasm/ui/ChatScreen.kt`.
+  - Added backward-compatible extension properties on `ColorScheme` (`surfaceContainerLowest`, `surfaceContainerLow`, `surfaceContainer`, `surfaceContainerHigh`, `surfaceContainerHighest`) providing native tonal surface elevation across all Material 3 and Compose BOM releases.
+
+### Status
+- 100% Kotlin compilation fix and ColorScheme container tokens backward compatibility completed.

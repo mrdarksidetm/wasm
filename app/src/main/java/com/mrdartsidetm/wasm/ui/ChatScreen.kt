@@ -35,8 +35,23 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mrdartsidetm.wasm.data.MessageEntity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
+
+// Material 3 Expressive Container Color backward-compatibility extensions
+private val ColorScheme.surfaceContainerLowest: Color
+    get() = surface.copy(alpha = 0.95f)
+
+private val ColorScheme.surfaceContainerLow: Color
+    get() = surfaceVariant.copy(alpha = 0.5f)
+
+private val ColorScheme.surfaceContainer: Color
+    get() = surfaceVariant.copy(alpha = 0.7f)
+
+private val ColorScheme.surfaceContainerHigh: Color
+    get() = surfaceVariant.copy(alpha = 0.85f)
+
+private val ColorScheme.surfaceContainerHighest: Color
+    get() = surfaceVariant
 
 /**
  * Memory-safe LRU Cache for decoded WhatsApp attachment bitmaps.
