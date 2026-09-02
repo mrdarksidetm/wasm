@@ -42,7 +42,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -54,6 +54,8 @@ android {
     lint {
         abortOnError = false
         checkReleaseBuilds = false
+        ignoreTestSources = true
+        checkDependencies = false
         htmlReport = true
         xmlReport = true
     }

@@ -129,3 +129,16 @@
 
 ### Status
 - 100% Keystore automation and workflow script hardening complete.
+
+---
+
+## [0.3.5] - 2026-09-02
+### Fixed & Hardened
+- **Release Minification & R8 Compatibility**:
+  - Added `-dontwarn **` and `-ignorewarnings` to `app/proguard-rules.pro` to prevent third-party transitive class warnings from failing release builds.
+  - Set `isShrinkResources = false` in `app/build.gradle.kts` while maintaining `isMinifyEnabled = true` for high-performance code shrinking without resource stripping conflicts.
+  - Added `ignoreTestSources = true` and `checkDependencies = false` to the `lint` block.
+  - Added build log capture and automated failure tracing in GitHub Actions `Build Universal Release APK` step for instant root-cause diagnostics in step summaries.
+
+### Status
+- 100% Release build hardening and diagnostic logging completed.

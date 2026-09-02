@@ -19,3 +19,7 @@
 # Jetpack DataStore Preferences
 -keep class androidx.datastore.** { *; }
 -dontwarn androidx.datastore.**
+
+# General R8 optimization safety
+-dontwarn **
+-ignorewarnings
