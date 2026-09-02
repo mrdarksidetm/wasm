@@ -11,6 +11,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   # Job 1: Static Code Analysis & Unit Testing
   code-analysis:
@@ -143,6 +146,18 @@ jobs:
           name: gradle-build-log
           path: build_log.txt
           retention-days: 7
+
+      - name: Push Build Diagnostics to Repo
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan ci-logs || git checkout ci-logs
+          git rm -rf . || true
+          cp build_log.txt error_log.txt || true
+          git add error_log.txt
+          git commit -m "ci: publish build log" || true
+          git push -f origin ci-logs || true
 
       - name: Verify Build Success
         run: |
