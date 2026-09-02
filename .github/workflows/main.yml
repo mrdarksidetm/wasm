@@ -78,15 +78,20 @@ jobs:
 
       - name: Configure Production Signing Keystore
         id: setup-keystore
+        env:
+          SECRET_KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          SECRET_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SECRET_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SECRET_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           mkdir -p keystore
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+          if [ -n "$SECRET_KEYSTORE_BASE64" ]; then
             echo "Using production keystore from repository secrets."
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore/release.jks
+            echo "$SECRET_KEYSTORE_BASE64" | base64 --decode > keystore/release.jks
             echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/keystore/release.jks" >> $GITHUB_ENV
-            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=$SECRET_KEYSTORE_PASSWORD" >> $GITHUB_ENV
+            echo "KEY_ALIAS=$SECRET_KEY_ALIAS" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=$SECRET_KEY_PASSWORD" >> $GITHUB_ENV
           else
             echo "No secret keystore found. Generating secure CI production keystore on runner."
             keytool -genkeypair -v \
@@ -106,21 +111,21 @@ jobs:
             # Package keystore and base64 string for user download
             mkdir -p keystore_export
             cp keystore/release.jks keystore_export/wasm-release.jks
-            base64 -w 0 keystore/release.jks > keystore_export/wasm-release.jks.base64.txt
-            cat << 'EOF' > keystore_export/CREDENTIALS.txt
-            Wasm Production Keystore Credentials
-            ====================================
-            KEYSTORE_PASSWORD: wasm_production_secure_pass
-            KEY_ALIAS: wasm_release_key
-            KEY_PASSWORD: wasm_production_secure_pass
-
-            To make this keystore permanent in GitHub:
-            1. Open repo Settings > Secrets and variables > Actions
-            2. Add secret KEYSTORE_BASE64 with content from wasm-release.jks.base64.txt
-            3. Add secret KEYSTORE_PASSWORD = wasm_production_secure_pass
-            4. Add secret KEY_ALIAS = wasm_release_key
-            5. Add secret KEY_PASSWORD = wasm_production_secure_pass
-            EOF
+            base64 -w 0 keystore/release.jks > keystore_export/wasm-release.jks.base64.txt 2>/dev/null || base64 keystore/release.jks > keystore_export/wasm-release.jks.base64.txt
+            {
+              echo "Wasm Production Keystore Credentials"
+              echo "===================================="
+              echo "KEYSTORE_PASSWORD: wasm_production_secure_pass"
+              echo "KEY_ALIAS: wasm_release_key"
+              echo "KEY_PASSWORD: wasm_production_secure_pass"
+              echo ""
+              echo "To make this keystore permanent in GitHub:"
+              echo "1. Open repo Settings > Secrets and variables > Actions"
+              echo "2. Add secret KEYSTORE_BASE64 with content from wasm-release.jks.base64.txt"
+              echo "3. Add secret KEYSTORE_PASSWORD = wasm_production_secure_pass"
+              echo "4. Add secret KEY_ALIAS = wasm_release_key"
+              echo "5. Add secret KEY_PASSWORD = wasm_production_secure_pass"
+            } > keystore_export/CREDENTIALS.txt
             echo "HAS_GENERATED_KEYSTORE=true" >> $GITHUB_ENV
           fi
 

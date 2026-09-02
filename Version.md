@@ -118,3 +118,14 @@
 
 ### Status
 - 100% Pipeline resilience and Android test stub mocking completed.
+
+---
+
+## [0.3.4] - 2026-09-02
+### Fixed & Hardened
+- **Signing Keystore Generation in CI**:
+  - Replaced bash heredoc with standard command grouping in `.github/workflows/main.yml` to prevent unexpected syntax errors caused by indented EOF identifiers on Linux runners.
+  - Injected GitHub Secrets into environment variables (`SECRET_KEYSTORE_*`) rather than direct script interpolation to ensure safe evaluation and prevent secret masking syntax issues.
+
+### Status
+- 100% Keystore automation and workflow script hardening complete.
