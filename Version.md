@@ -179,3 +179,13 @@
 
 ### Status
 - 100% Kotlin compilation fix and ColorScheme container tokens backward compatibility completed.
+
+---
+
+## [0.3.9] - 2026-09-02
+### Fixed
+- **Coroutines withContext Import Restoration**:
+  - Restored missing `import kotlinx.coroutines.withContext` in `app/src/main/java/com/mrdartsidetm/wasm/ui/ChatScreen.kt` required by `LocalImage` for IO bitmap decoding.
+
+### Status
+- 100% Import restoration and Kotlin compiler resolution complete.
