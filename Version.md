@@ -142,3 +142,17 @@
 
 ### Status
 - 100% Release build hardening and diagnostic logging completed.
+
+---
+
+## [0.3.6] - 2026-09-02
+### Fixed & Optimized
+- **Signing Keystore Fallback**:
+  - Added `else { initWith(getByName("debug")) }` fallback to `signingConfigs.release` in `app/build.gradle.kts` to prevent unhandled Gradle configuration exceptions if the keystore file is not resolved.
+- **Release Build Memory Allocation**:
+  - Injected 4GB JVM arguments (`-Xmx4096m -XX:MaxMetaspaceSize=1024m`) for `./gradlew assembleRelease` on GitHub Actions runner to prevent OutOfMemory/Metaspace crashes during compilation.
+  - Set `isMinifyEnabled = false` for safe, deterministic production release APK packaging.
+  - Added persistent `gradle-build-log` artifact upload (`if: always()`) in `.github/workflows/main.yml`.
+
+### Status
+- 100% Release build memory scaling and keystore fallback completed.

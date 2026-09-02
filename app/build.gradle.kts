@@ -35,18 +35,16 @@ android {
                 this.keyPassword = keyPassword
                 enableV1Signing = true
                 enableV2Signing = true
+            } else {
+                initWith(getByName("debug"))
             }
         }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
             signingConfig = signingConfigs.getByName("release")
         }
     }
