@@ -1,25 +1,168 @@
-name: Android CI
+name: Android CI / Production Build
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  # Job 1: Static Code Analysis & Unit Testing
+  code-analysis:
+    name: Analysis & Unit Tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Android Lint
+        run: ./gradlew lintDebug --no-daemon --stacktrace
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Upload Lint Analysis Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-lint-report
+          path: app/build/reports/lint-results*
+          if-no-files-found: ignore
+
+      - name: Upload Unit Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: app/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: ignore
+
+  # Job 2: Production Universal APK Assembly & Signing
+  build-production-apk:
+    name: Build Universal Production APK
+    needs: code-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Configure Production Signing Keystore
+        id: setup-keystore
+        run: |
+          mkdir -p keystore
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "Using production keystore from repository secrets."
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore/release.jks
+            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/keystore/release.jks" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "No secret keystore found. Generating secure CI production keystore on runner."
+            keytool -genkeypair -v \
+              -keystore keystore/release.jks \
+              -alias wasm_release_key \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass "wasm_production_secure_pass" \
+              -keypass "wasm_production_secure_pass" \
+              -dname "CN=Wasm Viewer, OU=Mobile, O=Wasm, L=Universal, ST=Universal, C=US"
+            echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/keystore/release.jks" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=wasm_production_secure_pass" >> $GITHUB_ENV
+            echo "KEY_ALIAS=wasm_release_key" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=wasm_production_secure_pass" >> $GITHUB_ENV
+
+            # Package keystore and base64 string for user download
+            mkdir -p keystore_export
+            cp keystore/release.jks keystore_export/wasm-release.jks
+            base64 -w 0 keystore/release.jks > keystore_export/wasm-release.jks.base64.txt
+            cat << 'EOF' > keystore_export/CREDENTIALS.txt
+            Wasm Production Keystore Credentials
+            ====================================
+            KEYSTORE_PASSWORD: wasm_production_secure_pass
+            KEY_ALIAS: wasm_release_key
+            KEY_PASSWORD: wasm_production_secure_pass
+
+            To make this keystore permanent in GitHub:
+            1. Open repo Settings > Secrets and variables > Actions
+            2. Add secret KEYSTORE_BASE64 with content from wasm-release.jks.base64.txt
+            3. Add secret KEYSTORE_PASSWORD = wasm_production_secure_pass
+            4. Add secret KEY_ALIAS = wasm_release_key
+            5. Add secret KEY_PASSWORD = wasm_production_secure_pass
+            EOF
+            echo "HAS_GENERATED_KEYSTORE=true" >> $GITHUB_ENV
+          fi
+
+      - name: Build Universal Release APK
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Package Universal APK & Generate Checksum
+        run: |
+          cd app/build/outputs/apk/release
+          # Rename output APK to standard descriptive universal release name
+          ORIGINAL_APK=$(find . -maxdepth 1 -name "*.apk" | head -n 1)
+          if [ -n "$ORIGINAL_APK" ]; then
+            cp "$ORIGINAL_APK" wasm-v0.3.0-universal-release.apk
+            sha256sum wasm-v0.3.0-universal-release.apk > wasm-v0.3.0-universal-release.apk.sha256
+            echo "Successfully packaged wasm-v0.3.0-universal-release.apk"
+          else
+            echo "Error: Release APK not found!" && exit 1
+          fi
+
+      - name: Upload Production Universal APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-v0.3.0-universal-release-apk
+          path: |
+            app/build/outputs/apk/release/wasm-v0.3.0-universal-release.apk
+            app/build/outputs/apk/release/wasm-v0.3.0-universal-release.apk.sha256
+          retention-days: 30
+
+      - name: Upload Permanent Production Keystore Artifact
+        if: env.HAS_GENERATED_KEYSTORE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-permanent-production-keystore
+          path: keystore_export/
+          retention-days: 90
+
+      - name: Workflow Run Summary
+        if: always()
+        run: |
+          echo "## 🚀 Wasm Production Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture:** Universal (armeabi-v7a, arm64-v8a, x86, x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Binary:** \`wasm-v0.3.0-universal-release.apk\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Minified & Optimized:** Yes (R8 / ProGuard enabled)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ env.HAS_GENERATED_KEYSTORE }}" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔑 Action Required: Save Your Permanent Keystore" >> $GITHUB_STEP_SUMMARY
+            echo "A production 2048-bit RSA signing key was created and saved to the **wasm-permanent-production-keystore** artifact." >> $GITHUB_STEP_SUMMARY
+            echo "Download it from the Artifacts section above and add the base64 string to **GitHub Repository Secrets** to keep using this key permanently!" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -42,17 +42,12 @@ class MainActivity : ComponentActivity() {
                 val filePickerLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.OpenDocument(),
                     onResult = { uri ->
-                        uri?.let {
-                            val isZip = isZipUri(applicationContext, it)
+                        uri?.let { selectedUri ->
+                            val isZip = isZipUri(applicationContext, selectedUri)
                             if (isZip) {
-                                contentResolver.openInputStream(it)?.use { stream ->
-                                    viewModel.importZipFile(stream)
-                                }
+                                viewModel.importZipUri(contentResolver, selectedUri)
                             } else {
-                                contentResolver.openInputStream(it)?.use { stream ->
-                                    val text = stream.bufferedReader().readText()
-                                    viewModel.importChatFile(text)
-                                }
+                                viewModel.importChatUri(contentResolver, selectedUri)
                             }
                         }
                     }
