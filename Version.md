@@ -356,3 +356,14 @@
 
 ### Status
 - 100% App icons (original & monochrome), home-only exit navigation, individual WhatsApp chat persistence, custom SVG nav icons, Home page, Settings page, and cohesive Messages platform chooser implemented.
+---
+
+## [0.5.1] - 2026-09-14
+### Fixed
+- **Material 3 Expressive Container Compatibility**:
+  - Made ColorScheme.surfaceContainer... backward-compatibility extension properties public in ChatScreen.kt to allow usage across HomeScreen.kt, PlatformChooserScreen.kt, and SettingsScreen.kt.
+  - Removed unsupported border parameter from ElevatedCard in PlatformChooserScreen.kt for strict alignment with Material 3 1.1 / Compose BOM 2023.10.01 API specifications.
+  - Cleaned up unused imports in PlatformChooserScreen.kt.
+
+### Status
+- 100% Compiler compatibility fixes applied; triggering remote CI/CD build.

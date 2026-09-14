@@ -44,19 +44,19 @@ import java.io.File
 import kotlin.math.abs
 
 // Material 3 Expressive Container Color backward-compatibility extensions
-private val ColorScheme.surfaceContainerLowest: Color
+val ColorScheme.surfaceContainerLowest: Color
     get() = surface.copy(alpha = 0.95f)
 
-private val ColorScheme.surfaceContainerLow: Color
+val ColorScheme.surfaceContainerLow: Color
     get() = surfaceVariant.copy(alpha = 0.5f)
 
-private val ColorScheme.surfaceContainer: Color
+val ColorScheme.surfaceContainer: Color
     get() = surfaceVariant.copy(alpha = 0.7f)
 
-private val ColorScheme.surfaceContainerHigh: Color
+val ColorScheme.surfaceContainerHigh: Color
     get() = surfaceVariant.copy(alpha = 0.85f)
 
-private val ColorScheme.surfaceContainerHighest: Color
+val ColorScheme.surfaceContainerHighest: Color
     get() = surfaceVariant
 
 private val WhatsAppAccentGreen = Color(0xFF25D366)
