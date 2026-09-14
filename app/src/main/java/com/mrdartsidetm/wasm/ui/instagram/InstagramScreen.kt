@@ -24,14 +24,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -520,7 +518,7 @@ fun InstagramLandingPage(
                     )
                     Spacer(Modifier.width(8.dp))
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
+                        Icons.Default.ArrowForward,
                         contentDescription = null,
                         tint = Color.White
                     )
@@ -584,7 +582,7 @@ fun InstagramConversationsList(
                             isSearchOpen = false
                             viewModel.setSearchQuery("")
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close search")
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Close search")
                         }
                     },
                     actions = {
@@ -613,7 +611,7 @@ fun InstagramConversationsList(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBackToLanding) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Overview")
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back to Overview")
                         }
                     },
                     actions = {
@@ -710,7 +708,7 @@ fun InstagramConversationsList(
                             item = item,
                             onClick = { onConversationClick(item.id) }
                         )
-                        HorizontalDivider(
+                        Divider(
                             modifier = Modifier.padding(start = 72.dp),
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                         )
@@ -868,7 +866,7 @@ fun InstagramDmThreadScreen(
                             isSearchActive = false
                             viewModel.setConversationSearchQuery("")
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Exit search")
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Exit search")
                         }
                     },
                     actions = {
@@ -924,7 +922,7 @@ fun InstagramDmThreadScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Inbox")
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back to Inbox")
                         }
                     },
                     actions = {
@@ -1358,7 +1356,7 @@ fun InstagramExpandedMediaViewerScreen(
                             onBack()
                         }
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -1539,7 +1537,7 @@ fun InstagramConversationDetailsScreen(
                 title = { Text("Details", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -1628,7 +1626,8 @@ fun InstagramConversationDetailsScreen(
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            itemsIndexed(mediaFiles) { index, media ->
+                            items(mediaFiles.size) { index ->
+                                val media = mediaFiles[index]
                                 Box(
                                     modifier = Modifier
                                         .aspectRatio(1f)
@@ -1880,7 +1879,7 @@ fun InstagramAudioItem(file: File, audioPlayerManager: AudioPlayerManager, isMe:
         Column(modifier = Modifier.weight(1f)) {
             val progress = (thisPos.toFloat() / thisDuration.toFloat()).coerceIn(0f, 1f)
             LinearProgressIndicator(
-                progress = { progress },
+                progress = progress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)

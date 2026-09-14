@@ -283,3 +283,16 @@
 
 ### Status
 - 100% Hardening and verification complete; ready for remote build pipeline execution.
+
+---
+
+## [0.4.3] - 2026-09-14
+### Fixed & Compatibility
+- **Compose BOM 2023.10.01 & Material 3 1.1 API Alignment**:
+  - Replaced Icons.AutoMirrored.Filled.Arrow* with universal Icons.Default.Arrow* across search bars, DM headers, overview navigation, and details screens in InstagramScreen.kt.
+  - Replaced HorizontalDivider with Divider for backwards compatibility with Material 3 1.1.
+  - Resolved itemsIndexed receiver ambiguity by importing ndroidx.compose.foundation.lazy.itemsIndexed for LazyColumn and using items(mediaFiles.size) for LazyVerticalGrid.
+  - Updated LinearProgressIndicator in audio player bubble to pass progress: Float directly rather than a lambda function.
+
+### Status
+- 100% Compiler compatibility fixes applied; pushing to trigger remote CI/CD build.
