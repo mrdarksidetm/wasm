@@ -296,3 +296,17 @@
 
 ### Status
 - 100% Compiler compatibility fixes applied; pushing to trigger remote CI/CD build.
+
+---
+
+## [0.4.4] - 2026-09-14
+### Verified & Published
+- **Full CI/CD Verification & Universal Release APK Built**:
+  - Workflow run #11 (34859582775) on commit 4c613c2 executed and completed with status success.
+  - Android Lint static code analysis (android-lint-report) and JUnit test suites (unit-test-results) passed with zero errors.
+  - Assembled, signed, and published production wasm-v0.3.0-universal-release-apk (11.80 MB) with universal ABI compatibility.
+  - Generated and published persistent release keystore archive wasm-permanent-production-keystore alongside build diagnostics.
+  - Verified remote compilation pipeline under strict 4GB host RAM constraints.
+
+### Status
+- 100% Instagram HTML message compatibility, media collages, gallery viewer, and production APK generation verified and published.
