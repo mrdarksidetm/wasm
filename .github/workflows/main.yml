@@ -155,6 +155,7 @@ jobs:
 
       - name: Build Universal Release APK
         run: |
+          chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace \
             -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8" \
             2>&1 | tee build_log.txt
