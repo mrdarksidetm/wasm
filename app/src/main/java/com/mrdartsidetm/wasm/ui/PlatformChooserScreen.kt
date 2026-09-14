@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
@@ -27,20 +28,38 @@ import com.mrdartsidetm.wasm.R
  * - "Choose the Platform" heading
  * - Two big cohesive buttons with custom icons for WhatsApp and Instagram
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlatformChooserScreen(
     whatsappChatCount: Int,
     instagramConversationCount: Int,
     onSelectWhatsApp: () -> Unit,
     onSelectInstagram: () -> Unit,
+    onBackToHome: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Messages", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    if (onBackToHome != null) {
+                        IconButton(onClick = onBackToHome) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back to Home")
+                        }
+                    }
+                }
+            )
+        },
         modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 32.dp),
-        contentAlignment = Alignment.Center
-    ) {
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -50,7 +69,6 @@ fun PlatformChooserScreen(
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
-                tonalElevation = 4.dp,
                 modifier = Modifier.size(88.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -116,6 +134,7 @@ fun PlatformChooserScreen(
                 onClick = onSelectInstagram
             )
         }
+        }
     }
 }
 
@@ -131,12 +150,12 @@ private fun PlatformChoiceCard(
     badgeText: String?,
     onClick: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp, pressedElevation = 6.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))

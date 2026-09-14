@@ -1,12 +1,14 @@
 package com.mrdartsidetm.wasm.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +33,7 @@ import com.mrdartsidetm.wasm.ui.instagram.InstagramViewModel
 fun SettingsScreen(
     whatsappViewModel: ChatViewModel,
     instagramViewModel: InstagramViewModel,
+    onBackToHome: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val currentUser by whatsappViewModel.currentUser.collectAsStateWithLifecycle()
@@ -148,6 +151,13 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
+                },
+                navigationIcon = {
+                    if (onBackToHome != null) {
+                        IconButton(onClick = onBackToHome) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back to Home")
+                        }
+                    }
                 }
             )
         }
@@ -168,11 +178,12 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            ElevatedCard(
+            Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.elevatedCardColors(
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -242,11 +253,12 @@ fun SettingsScreen(
             )
 
             // WhatsApp Storage Card
-            ElevatedCard(
+            Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.elevatedCardColors(
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -286,10 +298,12 @@ fun SettingsScreen(
                     }
 
                     if (waConversations.isNotEmpty()) {
-                        OutlinedButton(
+                        FilledTonalButton(
                             onClick = { showClearWhatsAppDialog = true },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -302,11 +316,12 @@ fun SettingsScreen(
             }
 
             // Instagram Storage Card
-            ElevatedCard(
+            Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.elevatedCardColors(
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -350,10 +365,12 @@ fun SettingsScreen(
                     }
 
                     if (igAccount != null) {
-                        OutlinedButton(
+                        FilledTonalButton(
                             onClick = { showClearInstagramDialog = true },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -373,11 +390,12 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            ElevatedCard(
+            Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.elevatedCardColors(
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -388,20 +406,13 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                                    contentDescription = null,
-                                    tint = Color.Unspecified,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.app_icon),
+                            contentDescription = "Wasm Logo",
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                        )
                         Column {
                             Text(
                                 text = "Wasm",
@@ -409,7 +420,7 @@ fun SettingsScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Version 0.5.0 • Material 3 Expressive",
+                                text = "Version 0.5.4 • Material 3 Expressive",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )

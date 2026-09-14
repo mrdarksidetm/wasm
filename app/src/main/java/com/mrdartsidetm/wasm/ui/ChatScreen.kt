@@ -13,6 +13,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -289,11 +290,12 @@ fun ChatScreen(
                 .padding(16.dp)
         ) {
             val stepText = (importState as? ImportUiState.Loading)?.step ?: "Importing chat..."
-            ElevatedCard(
+            Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.elevatedCardColors(
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -434,7 +436,10 @@ private fun WhatsAppConversationsListScreen(
                             }
                             DropdownMenu(
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
+                                onDismissRequest = { showMenu = false },
+                                shadowElevation = 0.dp,
+                                tonalElevation = 0.dp,
+                                border = null
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Clear All WhatsApp Chats") },
@@ -508,12 +513,12 @@ private fun WhatsAppConversationCard(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.elevatedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp, pressedElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
@@ -741,7 +746,10 @@ private fun WhatsAppChatDetailScreen(
                             }
                             DropdownMenu(
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
+                                onDismissRequest = { showMenu = false },
+                                shadowElevation = 0.dp,
+                                tonalElevation = 0.dp,
+                                border = null
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Switch Identity") },
@@ -780,24 +788,47 @@ private fun WhatsAppChatDetailScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
             ) {
-                var previousDate = ""
-                items(messages, key = { it.id }) { message ->
+                itemsIndexed(messages, key = { _, message -> message.id }) { index, message ->
                     val currentDate = extractDate(message.timestamp)
-                    if (currentDate != previousDate && currentDate.isNotEmpty()) {
+                    val prevMessage = if (index > 0) messages[index - 1] else null
+                    val prevDate = prevMessage?.let { extractDate(it.timestamp) } ?: ""
+                    val isDateBreak = currentDate != prevDate && currentDate.isNotEmpty()
+
+                    if (isDateBreak) {
                         DateSeparatorHeader(date = currentDate)
-                        previousDate = currentDate
                     }
 
                     if (message.isSystemMessage) {
                         SystemMessageChip(content = message.content)
                     } else {
                         val isMe = message.sender == currentUser
+
+                        // Grouping rule:
+                        // Sender name is shown only on the first message of a consecutive sender sequence.
+                        // Exception: When a message crosses another day break, show the sender name again on the first message.
+                        val isFirstInGroup = prevMessage == null ||
+                                prevMessage.isSystemMessage ||
+                                prevMessage.sender != message.sender ||
+                                isDateBreak
+
+                        val nextMessage = if (index < messages.size - 1) messages[index + 1] else null
+                        val nextDate = nextMessage?.let { extractDate(it.timestamp) } ?: ""
+                        val isNextDateBreak = nextDate != currentDate && nextDate.isNotEmpty()
+                        val isLastInGroup = nextMessage == null ||
+                                nextMessage.isSystemMessage ||
+                                nextMessage.sender != message.sender ||
+                                isNextDateBreak
+
+                        val showSenderName = !isMe && message.sender.isNotBlank() && isFirstInGroup
+
                         ExpressiveChatBubble(
                             message = message,
                             isMe = isMe,
+                            showSenderName = showSenderName,
+                            isFirstInGroup = isFirstInGroup,
+                            isLastInGroup = isLastInGroup,
                             mediaDir = chatMediaDir,
                             onImageClick = onImageClick
                         )
@@ -864,11 +895,16 @@ fun SystemMessageChip(content: String) {
 
 /**
  * Material 3 Expressive Chat Bubble for WhatsApp messages.
+ * Groups consecutive messages from the same sender with compact spacing and dynamic corners,
+ * and displays the sender name only on the first message of a turn (or after a day break).
  */
 @Composable
 fun ExpressiveChatBubble(
     message: MessageEntity,
     isMe: Boolean,
+    showSenderName: Boolean = false,
+    isFirstInGroup: Boolean = true,
+    isLastInGroup: Boolean = true,
     mediaDir: File,
     onImageClick: (File) -> Unit
 ) {
@@ -880,28 +916,41 @@ fun ExpressiveChatBubble(
         if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLowest
     }
 
+    // Material 3 Expressive corner grouping for individual bubbles
     val bubbleShape = if (isMe) {
-        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 4.dp)
+        when {
+            isFirstInGroup && isLastInGroup -> RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp)
+            isFirstInGroup -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 6.dp)
+            isLastInGroup -> RoundedCornerShape(topStart = 16.dp, topEnd = 6.dp, bottomStart = 16.dp, bottomEnd = 4.dp)
+            else -> RoundedCornerShape(topStart = 16.dp, topEnd = 6.dp, bottomStart = 16.dp, bottomEnd = 6.dp)
+        }
     } else {
-        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 16.dp)
+        when {
+            isFirstInGroup && isLastInGroup -> RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp)
+            isFirstInGroup -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 6.dp, bottomEnd = 16.dp)
+            isLastInGroup -> RoundedCornerShape(topStart = 6.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 16.dp)
+            else -> RoundedCornerShape(topStart = 6.dp, topEnd = 16.dp, bottomStart = 6.dp, bottomEnd = 16.dp)
+        }
     }
 
     val alignment = if (isMe) Alignment.End else Alignment.Start
+    val bottomSpacing = if (isLastInGroup) 6.dp else 2.dp
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp),
+            .padding(horizontal = 4.dp)
+            .padding(bottom = bottomSpacing),
         horizontalAlignment = alignment
     ) {
         Surface(
             shape = bubbleShape,
             color = bubbleColor,
-            tonalElevation = if (isMe) 2.dp else 1.dp,
+            tonalElevation = 0.dp,
             modifier = Modifier.widthIn(max = 320.dp)
         ) {
             Column(modifier = Modifier.padding(8.dp)) {
-                if (!isMe && message.sender.isNotBlank()) {
+                if (showSenderName) {
                     Text(
                         text = message.sender,
                         style = MaterialTheme.typography.labelMedium,
@@ -1170,11 +1219,12 @@ fun ExpressiveEmptyState(
     onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    ElevatedCard(
+    Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier
             .padding(24.dp)
             .fillMaxWidth()

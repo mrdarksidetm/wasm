@@ -9,6 +9,11 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,10 +21,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,6 +43,7 @@ import com.mrdartsidetm.wasm.ui.PlatformChooserScreen
 import com.mrdartsidetm.wasm.ui.SettingsScreen
 import com.mrdartsidetm.wasm.ui.instagram.InstagramScreen
 import com.mrdartsidetm.wasm.ui.instagram.InstagramViewModel
+import com.mrdartsidetm.wasm.ui.theme.WasmTheme
 import java.io.File
 
 class MainActivity : ComponentActivity() {
@@ -40,7 +51,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MaterialTheme {
+            WasmTheme {
                 val db = remember { ChatDatabase.getDatabase(applicationContext) }
                 val prefs = remember { UserPreferencesRepository(applicationContext) }
                 val whatsappMediaDir = remember { File(applicationContext.filesDir, "media") }
@@ -182,7 +193,14 @@ class MainActivity : ComponentActivity() {
                             NavigationBarItem(
                                 selected = selectedTab == 0,
                                 onClick = { selectedTab = 0 },
-                                icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                                icon = {
+                                    AnimatedNavIcon(
+                                        selected = selectedTab == 0,
+                                        selectedIcon = Icons.Filled.Home,
+                                        unselectedIcon = Icons.Outlined.Home,
+                                        contentDescription = "Home"
+                                    )
+                                },
                                 label = { Text("Home") }
                             )
                             NavigationBarItem(
@@ -195,13 +213,27 @@ class MainActivity : ComponentActivity() {
                                         selectedTab = 1
                                     }
                                 },
-                                icon = { Icon(Icons.Default.Forum, contentDescription = "Messages") },
+                                icon = {
+                                    AnimatedNavIcon(
+                                        selected = selectedTab == 1,
+                                        selectedIcon = Icons.Filled.Forum,
+                                        unselectedIcon = Icons.Outlined.Forum,
+                                        contentDescription = "Messages"
+                                    )
+                                },
                                 label = { Text("Messages") }
                             )
                             NavigationBarItem(
                                 selected = selectedTab == 2,
                                 onClick = { selectedTab = 2 },
-                                icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                                icon = {
+                                    AnimatedNavIcon(
+                                        selected = selectedTab == 2,
+                                        selectedIcon = Icons.Filled.Settings,
+                                        unselectedIcon = Icons.Outlined.Settings,
+                                        contentDescription = "Settings"
+                                    )
+                                },
                                 label = { Text("Settings") }
                             )
                         }
@@ -254,7 +286,8 @@ class MainActivity : ComponentActivity() {
                                         whatsappChatCount = waConversations.size,
                                         instagramConversationCount = igConversations.size,
                                         onSelectWhatsApp = { activeMessagesPlatform = "whatsapp" },
-                                        onSelectInstagram = { activeMessagesPlatform = "instagram" }
+                                        onSelectInstagram = { activeMessagesPlatform = "instagram" },
+                                        onBackToHome = { selectedTab = 0 }
                                     )
                                     "whatsapp" -> ChatScreen(
                                         viewModel = whatsappViewModel,
@@ -287,7 +320,8 @@ class MainActivity : ComponentActivity() {
                             }
                             2 -> SettingsScreen(
                                 whatsappViewModel = whatsappViewModel,
-                                instagramViewModel = instagramViewModel
+                                instagramViewModel = instagramViewModel,
+                                onBackToHome = { selectedTab = 0 }
                             )
                         }
                     }
@@ -317,5 +351,51 @@ class MainActivity : ComponentActivity() {
             }
         }
         return name
+    }
+}
+
+/**
+ * Material 3 Expressive animated navigation bar icon.
+ * Applies bouncy spring scaling, subtle rotation, and smooth morphing crossfade between outlined and filled states.
+ */
+@Composable
+private fun AnimatedNavIcon(
+    selected: Boolean,
+    selectedIcon: ImageVector,
+    unselectedIcon: ImageVector,
+    contentDescription: String
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.2f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "NavIconScale"
+    )
+
+    val rotation by animateFloatAsState(
+        targetValue = if (selected) 0f else -6f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "NavIconRotation"
+    )
+
+    Crossfade(
+        targetState = selected,
+        animationSpec = tween(durationMillis = 200),
+        label = "NavIconMorph",
+        modifier = Modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+            rotationZ = rotation
+        }
+    ) { isSelected ->
+        Icon(
+            imageVector = if (isSelected) selectedIcon else unselectedIcon,
+            contentDescription = contentDescription
+        )
     }
 }

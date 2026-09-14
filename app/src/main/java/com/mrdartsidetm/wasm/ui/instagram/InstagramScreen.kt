@@ -227,9 +227,10 @@ fun InstagramScreen(
                 .padding(16.dp)
         ) {
             val stepText = (importState as? ImportUiState.Loading)?.step ?: "Importing Instagram data..."
-            ElevatedCard(
+            Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -374,7 +375,10 @@ fun InstagramLandingPage(
                         }
                         DropdownMenu(
                             expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
+                            onDismissRequest = { showMenu = false },
+                            shadowElevation = 0.dp,
+                            tonalElevation = 0.dp,
+                            border = null
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Import Another ZIP") },
@@ -656,7 +660,10 @@ fun InstagramConversationsList(
                             }
                             DropdownMenu(
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
+                                onDismissRequest = { showMenu = false },
+                                shadowElevation = 0.dp,
+                                tonalElevation = 0.dp,
+                                border = null
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Overview") },
@@ -739,10 +746,6 @@ fun InstagramConversationsList(
                         InstagramConversationListItem(
                             item = item,
                             onClick = { onConversationClick(item.id) }
-                        )
-                        Divider(
-                            modifier = Modifier.padding(start = 72.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                         )
                     }
                 }
@@ -990,16 +993,35 @@ fun InstagramDmThreadScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    var previousDate = ""
-                    items(messages, key = { it.id }) { message ->
+                    itemsIndexed(messages, key = { _, message -> message.id }) { index, message ->
                         val currentDate = extractDate(message.timestamp)
-                        if (currentDate != previousDate && currentDate.isNotEmpty()) {
+                        val prevMessage = if (index > 0) messages[index - 1] else null
+                        val prevDate = prevMessage?.let { extractDate(it.timestamp) } ?: ""
+                        val isDateBreak = currentDate != prevDate && currentDate.isNotEmpty()
+
+                        if (isDateBreak) {
                             DateSeparatorHeader(date = currentDate)
-                            previousDate = currentDate
                         }
+
+                        val isMe = message.isOutgoing
+
+                        // Grouping rule:
+                        // Sender name is shown only on the first message of a consecutive sender sequence.
+                        // Exception: When a message crosses another day break, show the sender name again on the first message.
+                        val isFirstInGroup = prevMessage == null ||
+                                prevMessage.sender != message.sender ||
+                                isDateBreak
+
+                        val nextMessage = if (index < messages.size - 1) messages[index + 1] else null
+                        val nextDate = nextMessage?.let { extractDate(it.timestamp) } ?: ""
+                        val isNextDateBreak = nextDate != currentDate && nextDate.isNotEmpty()
+                        val isLastInGroup = nextMessage == null ||
+                                nextMessage.sender != message.sender ||
+                                isNextDateBreak
+
+                        val showSenderName = !isMe && message.sender.isNotBlank() && isFirstInGroup
 
                         val resolvedMediaList = remember(message.mediaPaths, message.mediaPath) {
                             viewModel.resolveMessageMedia(message)
@@ -1008,6 +1030,10 @@ fun InstagramDmThreadScreen(
                         InstagramChatBubble(
                             message = message,
                             mediaList = resolvedMediaList,
+                            isMe = isMe,
+                            showSenderName = showSenderName,
+                            isFirstInGroup = isFirstInGroup,
+                            isLastInGroup = isLastInGroup,
                             audioPlayerManager = viewModel.audioPlayerManager,
                             onImageClick = { onImageClick(it) },
                             onVideoClick = { onVideoClick(it) },
@@ -1024,44 +1050,50 @@ fun InstagramDmThreadScreen(
 
 /**
  * Authentic Instagram DM Speech Bubble with collage grouping for simultaneous photos/videos.
+ * Dynamically groups consecutive messages with responsive corner radii and displays the sender name
+ * exclusively on the first message of a sequence (or upon crossing a day break).
  */
 @Composable
 fun InstagramChatBubble(
     message: InstagramMessageEntity,
     mediaList: List<Pair<String, File>>,
+    isMe: Boolean = message.isOutgoing,
+    showSenderName: Boolean = false,
+    isFirstInGroup: Boolean = true,
+    isLastInGroup: Boolean = true,
     audioPlayerManager: AudioPlayerManager,
     onImageClick: (File) -> Unit,
     onVideoClick: (File) -> Unit,
     onOpenGroupMedia: (List<Pair<String, File>>) -> Unit
 ) {
-    val isMe = message.isOutgoing
     val isDark = isSystemInDarkTheme()
 
     val bubbleAlignment = if (isMe) Alignment.CenterEnd else Alignment.CenterStart
 
     val bubbleShape = if (isMe) {
-        RoundedCornerShape(
-            topStart = 18.dp,
-            topEnd = 18.dp,
-            bottomStart = 18.dp,
-            bottomEnd = 4.dp
-        )
+        when {
+            isFirstInGroup && isLastInGroup -> RoundedCornerShape(18.dp, 18.dp, 18.dp, 4.dp)
+            isFirstInGroup -> RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = 18.dp, bottomEnd = 6.dp)
+            isLastInGroup -> RoundedCornerShape(topStart = 18.dp, topEnd = 6.dp, bottomStart = 18.dp, bottomEnd = 4.dp)
+            else -> RoundedCornerShape(topStart = 18.dp, topEnd = 6.dp, bottomStart = 18.dp, bottomEnd = 6.dp)
+        }
     } else {
-        RoundedCornerShape(
-            topStart = 18.dp,
-            topEnd = 18.dp,
-            bottomStart = 4.dp,
-            bottomEnd = 18.dp
-        )
+        when {
+            isFirstInGroup && isLastInGroup -> RoundedCornerShape(18.dp, 18.dp, 4.dp, 18.dp)
+            isFirstInGroup -> RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = 6.dp, bottomEnd = 18.dp)
+            isLastInGroup -> RoundedCornerShape(topStart = 6.dp, topEnd = 18.dp, bottomStart = 4.dp, bottomEnd = 18.dp)
+            else -> RoundedCornerShape(topStart = 6.dp, topEnd = 18.dp, bottomStart = 6.dp, bottomEnd = 18.dp)
+        }
     }
 
     val incomingBg = if (isDark) Color(0xFF262626) else Color(0xFFEFEFEF)
     val incomingTextColor = if (isDark) Color.White else Color(0xFF1C1E21)
+    val bottomSpacing = if (isLastInGroup) 6.dp else 2.dp
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(bottom = bottomSpacing),
         horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
     ) {
         Box(
@@ -1082,7 +1114,7 @@ fun InstagramChatBubble(
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 // Sender name
-                if (!isMe && message.sender.isNotBlank()) {
+                if (showSenderName) {
                     Text(
                         text = message.sender,
                         style = MaterialTheme.typography.labelSmall,
@@ -1399,7 +1431,10 @@ fun InstagramExpandedMediaViewerScreen(
                         }
                         DropdownMenu(
                             expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
+                            onDismissRequest = { showMenu = false },
+                            shadowElevation = 0.dp,
+                            tonalElevation = 0.dp,
+                            border = null
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Download into Gallery") },

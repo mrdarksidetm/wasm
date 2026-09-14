@@ -384,3 +384,58 @@
 
 ### Status
 - 100% Remote CI/CD build verified and Universal Production APK successfully generated.
+
+---
+
+## [0.5.3] - 2026-09-15 04:47:00
+### San Francisco Pro & iOS Emoji Integration, UI Border/Shadow Cleanup, Navigation Hierarchy & CI/CD Permanent Keystore
+- **San Francisco Pro Typography & iOS Emoji Integration**:
+  - Integrated 18 weights and italics of San Francisco Pro (`SF-Pro-Display-*.otf`) into `app/src/main/res/font/` with compliant lowercase Android resource naming (`sf_pro_display_*.otf`).
+  - Bundled the 30 MB native CBDT/CBLC iOS emoji font (`iOS 26.4.ttf`) into `app/src/main/assets/fonts/ios_emoji.ttf`.
+  - Created `ui.theme.Type.kt` defining `SfProDisplayFontFamily`, custom `Typeface.CustomFallbackBuilder` for Android 10+ (API 29+) chaining San Francisco Pro with iOS emoji fallback, and complete Material 3 Typography mappings.
+  - Created `ui.theme.Theme.kt` defining `WasmTheme` applying SF Pro typography and Material 3 Expressive color schemes.
+  - Activated `WasmTheme` in `MainActivity.kt`.
+- **Elimination of Murky Shadows and Internal List/Menu Borders**:
+  - `HomeScreen.kt`: Converted Hero card and `HomePlatformCard` from `ElevatedCard` to flat `Card` (`elevation = 0.dp`); removed `BorderStroke` from Security & Privacy assurance notice surface.
+  - `PlatformChooserScreen.kt`: Converted `PlatformChoiceCard` from `ElevatedCard` to flat `Card` (`elevation = 0.dp`); removed `tonalElevation` from globe surface; added TopAppBar with back navigation icon to Home.
+  - `ChatScreen.kt`: Converted WhatsApp conversation cards and import progress cards from `ElevatedCard` to flat `Card` (`elevation = 0.dp`); eliminated `DropdownMenu` shadow and border by specifying `shadowElevation = 0.dp`, `tonalElevation = 0.dp`, `border = null`.
+  - `InstagramScreen.kt`: Removed `Divider` lines between conversations in `InstagramConversationsList` (eliminating inside list borders); converted import progress card to flat `Card`; eliminated shadows and borders on all 3 `DropdownMenu`s (`shadowElevation = 0.dp`, `tonalElevation = 0.dp`, `border = null`.
+  - `SettingsScreen.kt`: Converted all 4 section cards from `ElevatedCard` to flat `Card` (`elevation = 0.dp`); removed `BorderStroke` outline borders on clear buttons by adopting borderless `FilledTonalButton`; added back navigation icon in TopAppBar.
+- **Hierarchical Back Navigation & Exit-on-Home Mandate**:
+  - Enforced exact successive hierarchy: Individual Chat -> Account / Conversation List -> Platform (WhatsApp / Insta) -> Message Page (Platform Chooser) -> Home Page.
+  - App exit is strictly permitted exclusively on Home page (`selectedTab == 0`). From all sub-pages, pressing back button or tapping on-screen back arrows ascends the hierarchy directly towards Home.
+- **CI/CD Permanent Single Keystore & Direct Unzipped APK Distribution**:
+  - Fixed GitHub Actions keystore recreation: Updated `Configure Production Signing Keystore` in `main.yml` to automatically preserve and reuse the generated 2048-bit RSA release keystore across builds via `ci-keystore` branch (and repository secrets if provided), guaranteeing an identical signing key forever.
+  - Added production-ready APK verification step using `apksigner verify --verbose` to ensure v1, v2, and v3 signature scheme compliance.
+  - Solved GitHub Actions zip compression: GitHub artifact downloads are zipped by design; integrated automated GitHub Releases publishing (`gh release create latest-apk`) to distribute standalone unzipped `.apk` and `.sha256` files directly for instant one-click downloading and testing.
+
+### Status
+- 100% Implemented and logged; ready for remote GitHub Actions verification.
+
+
+---
+
+## [0.5.4] - 2026-09-15 04:54:00
+### App Icons Update, Animated Navigation Bar, Individual Turn Message Grouping & Clutter-Free M3 Expressive Polish
+- **App Icons Synchronization (PNG & SVG)**:
+  - Installed high-resolution `Wasm - Original AppIcon.png` into `app/src/main/res/drawable/app_icon.png`.
+  - Generated and installed density-specific mipmap launcher icons (`ic_launcher.png` and `ic_launcher_round.png`) across all standard Android density buckets: `mipmap-mdpi`, `mipmap-hdpi`, `mipmap-xhdpi`, `mipmap-xxhdpi`, and `mipmap-xxxhdpi`.
+  - Updated in-app branding surfaces in `HomeScreen.kt` (Header logo) and `SettingsScreen.kt` (About dialog card) to render the official app icon with 10.dp and 14.dp rounded corner clipping.
+  - Retained vector XML drawables `ic_launcher_original.xml` and `ic_launcher_foreground.xml` matching the updated SVG geometry.
+- **Material 3 Expressive Animated Navigation Bar Icons**:
+  - Implemented `AnimatedNavIcon` in `MainActivity.kt` with dynamic spring physics (`Spring.DampingRatioMediumBouncy`, `Spring.StiffnessMediumLow`).
+  - Added bouncy 1.0f -> 1.2f scale bounce and -6° -> 0° expressive tilt transitions on navigation tab selection.
+  - Configured seamless `Crossfade` morphing between Outlined and Filled Material 3 icons for Home (`Icons.Outlined.Home` -> `Icons.Filled.Home`), Messages (`Icons.Outlined.Forum` -> `Icons.Filled.Forum`), and Settings (`Icons.Outlined.Settings` -> `Icons.Filled.Settings`).
+- **Individual Turn Message Grouping (WhatsApp & Instagram)**:
+  - Preserved individual message bubbles without combining distinct messages into single bubble containers.
+  - Implemented consecutive sender turn grouping with compact 2.dp intra-turn message spacing and 6.dp inter-turn spacing.
+  - Suppressed redundant sender names: displayed the sender's name exclusively on the first message of a consecutive sender sequence.
+  - **Day Break Exception Enforced**: When consecutive messages from the same sender cross a calendar day boundary (`isDateBreak`), the centered `DateSeparatorHeader` is rendered and the sender's name is explicitly displayed again on the first message of the new day.
+  - Dynamic Material 3 Expressive Corner Curvatures:
+    - WhatsApp `ExpressiveChatBubble`: 16.dp standard corners with tucked 4.dp/6.dp tail corners on boundary bubbles.
+    - Instagram `InstagramChatBubble`: 18.dp standard corners with dynamic 4.dp/6.dp corners and Instagram gradient/neutral backgrounds.
+- **Minimalistic & Clutter-Free UI Experience**:
+  - Stripped unnecessary visual clutter, heavy elevation drops, and duplicate divider borders across all lists and dropdown menus while rigorously retaining 100% of functional capabilities, media viewers, audio playback, and search tools.
+
+### Status
+- 100% Implemented; code syntax and brace balance verified; ready for remote GitHub Actions verification.
