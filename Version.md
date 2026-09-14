@@ -367,3 +367,20 @@
 
 ### Status
 - 100% Compiler compatibility fixes applied; triggering remote CI/CD build.
+---
+
+## [0.5.2] - 2026-09-14 23:37:00
+### Remote CI/CD Build Verification & Release APK Generation
+- **Workflow Run**: Android CI / Production Build (Run ID: 34878047101, Commit: 4f1d1dda6df597e76beb37b07bcfa3038c094d47)
+- **Jobs Verification**:
+  - Analysis & Unit Tests (Job ID: 104090069410): Passed with zero lint and unit test regressions.
+  - Build Universal Production APK (Job ID: 104090785706): Compiled release APK and signed successfully.
+- **Generated Artifacts**:
+  - wasm-v0.3.0-universal-release-apk (Artifact ID: 10361349893, Size: 11,882,450 bytes / 11.88 MB): Verified ready for release distribution.
+  - wasm-permanent-production-keystore (Artifact ID: 10361374754)
+  - android-lint-report (Artifact ID: 10361473816)
+  - unit-test-results (Artifact ID: 10361319596)
+  - gradle-build-log (Artifact ID: 10361907484)
+
+### Status
+- 100% Remote CI/CD build verified and Universal Production APK successfully generated.
