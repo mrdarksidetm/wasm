@@ -375,10 +375,7 @@ fun InstagramLandingPage(
                         }
                         DropdownMenu(
                             expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
-                            shadowElevation = 0.dp,
-                            tonalElevation = 0.dp,
-                            border = null
+                            onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Import Another ZIP") },
@@ -660,10 +657,7 @@ fun InstagramConversationsList(
                             }
                             DropdownMenu(
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false },
-                                shadowElevation = 0.dp,
-                                tonalElevation = 0.dp,
-                                border = null
+                                onDismissRequest = { showMenu = false }
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Overview") },
@@ -1431,10 +1425,7 @@ fun InstagramExpandedMediaViewerScreen(
                         }
                         DropdownMenu(
                             expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
-                            shadowElevation = 0.dp,
-                            tonalElevation = 0.dp,
-                            border = null
+                            onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Download into Gallery") },

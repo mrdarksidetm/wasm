@@ -436,10 +436,7 @@ private fun WhatsAppConversationsListScreen(
                             }
                             DropdownMenu(
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false },
-                                shadowElevation = 0.dp,
-                                tonalElevation = 0.dp,
-                                border = null
+                                onDismissRequest = { showMenu = false }
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Clear All WhatsApp Chats") },
@@ -746,10 +743,7 @@ private fun WhatsAppChatDetailScreen(
                             }
                             DropdownMenu(
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false },
-                                shadowElevation = 0.dp,
-                                tonalElevation = 0.dp,
-                                border = null
+                                onDismissRequest = { showMenu = false }
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Switch Identity") },
