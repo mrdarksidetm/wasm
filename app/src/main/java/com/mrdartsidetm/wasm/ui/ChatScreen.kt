@@ -5,6 +5,7 @@ import android.util.LruCache
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,10 +35,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mrdartsidetm.wasm.R
 import com.mrdartsidetm.wasm.data.MessageEntity
+import com.mrdartsidetm.wasm.data.WhatsAppConversationEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.abs
 
 // Material 3 Expressive Container Color backward-compatibility extensions
 private val ColorScheme.surfaceContainerLowest: Color
@@ -53,6 +58,19 @@ private val ColorScheme.surfaceContainerHigh: Color
 
 private val ColorScheme.surfaceContainerHighest: Color
     get() = surfaceVariant
+
+private val WhatsAppAccentGreen = Color(0xFF25D366)
+
+private val AvatarColorsList = listOf(
+    Color(0xFFE91E63), Color(0xFF9C27B0), Color(0xFF673AB7),
+    Color(0xFF3F51B5), Color(0xFF2196F3), Color(0xFF009688),
+    Color(0xFF4CAF50), Color(0xFFFF9800), Color(0xFFFF5722)
+)
+
+private fun getWhatsAppAvatarColor(name: String): Color {
+    val hash = abs(name.hashCode())
+    return AvatarColorsList[hash % AvatarColorsList.size]
+}
 
 /**
  * Memory-safe LRU Cache for decoded WhatsApp attachment bitmaps.
@@ -79,13 +97,11 @@ object BitmapMemoryCache {
 fun decodeSampledBitmap(file: File, reqWidth: Int = 600, reqHeight: Int = 600): ImageBitmap? {
     if (!file.exists() || file.length() == 0L) return null
     return try {
-        // Pass 1: query dimensions without allocating heap memory
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = true
         }
         BitmapFactory.decodeFile(file.absolutePath, options)
 
-        // Pass 2: calculate inSampleSize
         var inSampleSize = 1
         if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
             val halfHeight = options.outHeight / 2
@@ -130,26 +146,29 @@ fun extractDate(timestamp: String): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatViewModel, onImportClick: () -> Unit) {
+fun ChatScreen(
+    viewModel: ChatViewModel,
+    onImportClick: () -> Unit,
+    onBackToPlatformChooser: (() -> Unit)? = null
+) {
+    val conversations by viewModel.filteredConversations.collectAsStateWithLifecycle()
+    val allConversations by viewModel.conversations.collectAsStateWithLifecycle()
+    val selectedConversationId by viewModel.selectedConversationId.collectAsStateWithLifecycle()
+    val activeConversation by viewModel.activeConversation.collectAsStateWithLifecycle()
     val messages by viewModel.filteredMessages.collectAsStateWithLifecycle()
-    val allMessages by viewModel.messages.collectAsStateWithLifecycle()
+    val allMessages by viewModel.activeMessages.collectAsStateWithLifecycle()
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val senders by viewModel.uniqueSenders.collectAsStateWithLifecycle()
     val importState by viewModel.importUiState.collectAsStateWithLifecycle()
-    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val mediaDir = viewModel.mediaDir
 
     var showIdentityDialog by remember { mutableStateOf(false) }
-    var showClearChatDialog by remember { mutableStateOf(false) }
-    var isSearchActive by remember { mutableStateOf(false) }
     var fullScreenImageFile by remember { mutableStateOf<File?>(null) }
-    var showMenu by remember { mutableStateOf(false) }
-
-    val listState = rememberLazyListState()
+    var conversationToDelete by remember { mutableStateOf<WhatsAppConversationEntity?>(null) }
+    var showClearAllDialog by remember { mutableStateOf(false) }
 
     // Auto-prompt identity selection if messages exist but identity is not configured
     LaunchedEffect(senders, currentUser) {
-        if (senders.isNotEmpty() && currentUser.isEmpty()) {
+        if (senders.isNotEmpty() && currentUser.isEmpty() && selectedConversationId != null) {
             showIdentityDialog = true
         }
     }
@@ -166,24 +185,50 @@ fun ChatScreen(viewModel: ChatViewModel, onImportClick: () -> Unit) {
         )
     }
 
-    if (showClearChatDialog) {
+    // Single conversation delete confirmation dialog
+    conversationToDelete?.let { conv ->
         AlertDialog(
-            onDismissRequest = { showClearChatDialog = false },
-            icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null) },
-            title = { Text("Clear Chat Data?") },
-            text = { Text("This will remove all imported messages and extracted media from your local database.") },
+            onDismissRequest = { conversationToDelete = null },
+            icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete Chat?") },
+            text = { Text("Permanently delete conversation with \"${conv.title}\" and all its messages and media?") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.clearChat()
-                        showClearChatDialog = false
+                        viewModel.deleteConversation(conv.id)
+                        conversationToDelete = null
                     }
                 ) {
-                    Text("Clear All", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showClearChatDialog = false }) {
+                TextButton(onClick = { conversationToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Clear all WhatsApp chats confirmation dialog
+    if (showClearAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearAllDialog = false },
+            icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Clear All WhatsApp Chats?") },
+            text = { Text("This will permanently remove all saved WhatsApp conversations and extracted media files from your local storage.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.clearAllWhatsApp()
+                        showClearAllDialog = false
+                    }
+                ) {
+                    Text("Clear All", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearAllDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -195,6 +240,407 @@ fun ChatScreen(viewModel: ChatViewModel, onImportClick: () -> Unit) {
         FullScreenImageDialog(file = file, onDismiss = { fullScreenImageFile = null })
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (selectedConversationId == null) {
+            // Level 1: Conversations List or Empty State
+            if (allConversations.isEmpty() && importState !is ImportUiState.Loading) {
+                ExpressiveEmptyState(
+                    onImportClick = onImportClick,
+                    onBack = onBackToPlatformChooser,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                WhatsAppConversationsListScreen(
+                    conversations = conversations,
+                    allConversations = allConversations,
+                    viewModel = viewModel,
+                    onConversationClick = { id -> viewModel.selectConversation(id) },
+                    onDeleteConversation = { conv -> conversationToDelete = conv },
+                    onClearAll = { showClearAllDialog = true },
+                    onImportClick = onImportClick,
+                    onBack = onBackToPlatformChooser
+                )
+            }
+        } else {
+            // Level 2: Individual Chat Detail View
+            val chatMediaDir = viewModel.getMediaDirForConversation(activeConversation)
+            WhatsAppChatDetailScreen(
+                conversation = activeConversation,
+                messages = messages,
+                allMessages = allMessages,
+                currentUser = currentUser,
+                senders = senders,
+                chatMediaDir = chatMediaDir,
+                viewModel = viewModel,
+                onBack = { viewModel.closeConversation() },
+                onSwitchIdentity = { showIdentityDialog = true },
+                onDeleteThisChat = { activeConversation?.let { conversationToDelete = it } },
+                onImageClick = { fullScreenImageFile = it }
+            )
+        }
+
+        // Material 3 Expressive Import Progress Banner
+        AnimatedVisibility(
+            visible = importState is ImportUiState.Loading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp)
+        ) {
+            val stepText = (importState as? ImportUiState.Loading)?.step ?: "Importing chat..."
+            ElevatedCard(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stepText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+            }
+        }
+
+        // Error Alert Dialog
+        (importState as? ImportUiState.Error)?.let { err ->
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissImportState() },
+                icon = { Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                title = { Text("Import Error") },
+                text = { Text(err.message) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissImportState() }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+    }
+}
+
+/**
+ * WhatsApp Conversations List Screen (Inbox view showing every individual saved chat).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WhatsAppConversationsListScreen(
+    conversations: List<WhatsAppConversationEntity>,
+    allConversations: List<WhatsAppConversationEntity>,
+    viewModel: ChatViewModel,
+    onConversationClick: (String) -> Unit,
+    onDeleteConversation: (WhatsAppConversationEntity) -> Unit,
+    onClearAll: () -> Unit,
+    onImportClick: () -> Unit,
+    onBack: (() -> Unit)?
+) {
+    val searchQuery by viewModel.conversationSearchQuery.collectAsStateWithLifecycle()
+    var isSearchActive by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            if (isSearchActive) {
+                TopAppBar(
+                    title = {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.setConversationSearchQuery(it) },
+                            placeholder = { Text("Search chats...") },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            isSearchActive = false
+                            viewModel.setConversationSearchQuery("")
+                        }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Exit search")
+                        }
+                    },
+                    actions = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.setConversationSearchQuery("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear search")
+                            }
+                        }
+                    }
+                )
+            } else {
+                TopAppBar(
+                    navigationIcon = {
+                        if (onBack != null) {
+                            IconButton(onClick = onBack) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back to platform selection")
+                            }
+                        }
+                    },
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_nav_whatsapp),
+                                contentDescription = null,
+                                tint = WhatsAppAccentGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "WhatsApp Chats",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${allConversations.size} saved ${if (allConversations.size == 1) "chat" else "chats"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { isSearchActive = true }) {
+                            Icon(Icons.Default.Search, contentDescription = "Search chats")
+                        }
+                        FilledTonalButton(
+                            onClick = onImportClick,
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(end = 4.dp)
+                        ) {
+                            Icon(Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Import", style = MaterialTheme.typography.labelMedium)
+                        }
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Clear All WhatsApp Chats") },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.DeleteSweep,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    onClick = {
+                                        showMenu = false
+                                        onClearAll()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onImportClick,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Import Chat", fontWeight = FontWeight.SemiBold) },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    ) { innerPadding ->
+        if (conversations.isEmpty() && searchQuery.isNotBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No chats found matching \"$searchQuery\"",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(conversations, key = { it.id }) { conversation ->
+                    WhatsAppConversationCard(
+                        conversation = conversation,
+                        onClick = { onConversationClick(conversation.id) },
+                        onDelete = { onDeleteConversation(conversation) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Individual WhatsApp conversation card displayed in the conversations list.
+ */
+@Composable
+private fun WhatsAppConversationCard(
+    conversation: WhatsAppConversationEntity,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    ElevatedCard(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp, pressedElevation = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Initial Avatar Circle
+            Surface(
+                shape = CircleShape,
+                color = getWhatsAppAvatarColor(conversation.title),
+                modifier = Modifier.size(50.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    val initial = conversation.title.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "W"
+                    Text(
+                        text = initial,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            // Conversation info
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = conversation.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (conversation.lastTimestamp.isNotBlank()) {
+                        Text(
+                            text = conversation.lastTimestamp,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (conversation.lastMessage.isNotBlank()) conversation.lastMessage else "No messages",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = WhatsAppAccentGreen.copy(alpha = 0.16f),
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(
+                            text = "${conversation.messageCount} msgs",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = WhatsAppAccentGreen,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Delete single conversation button
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DeleteOutline,
+                    contentDescription = "Delete chat",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * WhatsApp Individual Chat Detail Screen (viewing messages of a single selected conversation).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WhatsAppChatDetailScreen(
+    conversation: WhatsAppConversationEntity?,
+    messages: List<MessageEntity>,
+    allMessages: List<MessageEntity>,
+    currentUser: String,
+    senders: List<String>,
+    chatMediaDir: File,
+    viewModel: ChatViewModel,
+    onBack: () -> Unit,
+    onSwitchIdentity: () -> Unit,
+    onDeleteThisChat: () -> Unit,
+    onImageClick: (File) -> Unit
+) {
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    var isSearchActive by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+
     Scaffold(
         topBar = {
             if (isSearchActive) {
@@ -203,7 +649,7 @@ fun ChatScreen(viewModel: ChatViewModel, onImportClick: () -> Unit) {
                         TextField(
                             value = searchQuery,
                             onValueChange = { viewModel.setSearchQuery(it) },
-                            placeholder = { Text("Search messages...") },
+                            placeholder = { Text("Search in chat...") },
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
@@ -232,14 +678,39 @@ fun ChatScreen(viewModel: ChatViewModel, onImportClick: () -> Unit) {
                 )
             } else {
                 TopAppBar(
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back to chats")
+                        }
+                    },
                     title = {
-                        Column {
-                            Text(
-                                text = "Wasm Chat Viewer",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            if (allMessages.isNotEmpty()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = getWhatsAppAvatarColor(conversation?.title ?: "Chat"),
+                                modifier = Modifier.size(38.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    val initial = conversation?.title?.trim()?.firstOrNull()?.uppercaseChar()?.toString() ?: "W"
+                                    Text(
+                                        text = initial,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = conversation?.title ?: "WhatsApp Chat",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                                 val subtitle = if (searchQuery.isNotBlank()) {
                                     "${messages.size} found of ${allMessages.size}"
                                 } else {
@@ -259,149 +730,79 @@ fun ChatScreen(viewModel: ChatViewModel, onImportClick: () -> Unit) {
                                 Icon(Icons.Default.Search, contentDescription = "Search messages")
                             }
                             if (senders.isNotEmpty()) {
-                                IconButton(onClick = { showIdentityDialog = true }) {
+                                IconButton(onClick = onSwitchIdentity) {
                                     Icon(Icons.Default.Person, contentDescription = "Switch User Identity")
                                 }
                             }
                         }
-                        FilledTonalButton(
-                            onClick = onImportClick,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                            modifier = Modifier.padding(end = 4.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.FileOpen,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text("Import", style = MaterialTheme.typography.labelMedium)
-                        }
-                        if (allMessages.isNotEmpty()) {
-                            Box {
-                                IconButton(onClick = { showMenu = true }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                                }
-                                DropdownMenu(
-                                    expanded = showMenu,
-                                    onDismissRequest = { showMenu = false }
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Switch Identity") },
-                                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                                        onClick = {
-                                            showMenu = false
-                                            showIdentityDialog = true
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Clear Chat") },
-                                        leadingIcon = {
-                                            Icon(
-                                                Icons.Default.DeleteSweep,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.error
-                                            )
-                                        },
-                                        onClick = {
-                                            showMenu = false
-                                            showClearChatDialog = true
-                                        }
-                                    )
-                                }
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Switch Identity") },
+                                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                                    onClick = {
+                                        showMenu = false
+                                        onSwitchIdentity()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Delete This Chat") },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.DeleteSweep,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    onClick = {
+                                        showMenu = false
+                                        onDeleteThisChat()
+                                    }
+                                )
                             }
                         }
                     }
                 )
             }
         }
-    ) { padding ->
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(innerPadding)
         ) {
-            if (allMessages.isEmpty() && importState !is ImportUiState.Loading) {
-                // Material 3 Expressive Empty State
-                ExpressiveEmptyState(
-                    onImportClick = onImportClick,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else {
-                // Chat Message Stream
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    var previousDate = ""
-                    items(messages, key = { it.id }) { message ->
-                        val currentDate = extractDate(message.timestamp)
-                        if (currentDate != previousDate && currentDate.isNotEmpty()) {
-                            DateSeparatorHeader(date = currentDate)
-                            previousDate = currentDate
-                        }
-
-                        if (message.isSystemMessage) {
-                            SystemMessageChip(content = message.content)
-                        } else {
-                            val isMe = message.sender == currentUser
-                            ExpressiveChatBubble(
-                                message = message,
-                                isMe = isMe,
-                                mediaDir = mediaDir,
-                                onImageClick = { fullScreenImageFile = it }
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Material 3 Expressive Import Progress Banner
-            AnimatedVisibility(
-                visible = importState is ImportUiState.Loading,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(16.dp)
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                val stepText = (importState as? ImportUiState.Loading)?.step ?: "Importing chat..."
-                ElevatedCard(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = stepText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
+                var previousDate = ""
+                items(messages, key = { it.id }) { message ->
+                    val currentDate = extractDate(message.timestamp)
+                    if (currentDate != previousDate && currentDate.isNotEmpty()) {
+                        DateSeparatorHeader(date = currentDate)
+                        previousDate = currentDate
+                    }
+
+                    if (message.isSystemMessage) {
+                        SystemMessageChip(content = message.content)
+                    } else {
+                        val isMe = message.sender == currentUser
+                        ExpressiveChatBubble(
+                            message = message,
+                            isMe = isMe,
+                            mediaDir = chatMediaDir,
+                            onImageClick = onImageClick
                         )
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     }
                 }
-            }
-
-            // Error Alert Dialog
-            (importState as? ImportUiState.Error)?.let { err ->
-                AlertDialog(
-                    onDismissRequest = { viewModel.dismissImportState() },
-                    icon = { Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                    title = { Text("Import Error") },
-                    text = { Text(err.message) },
-                    confirmButton = {
-                        TextButton(onClick = { viewModel.dismissImportState() }) {
-                            Text("OK")
-                        }
-                    }
-                )
             }
         }
     }
@@ -452,7 +853,7 @@ fun SystemMessageChip(content: String) {
         ) {
             Text(
                 text = content,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -462,8 +863,7 @@ fun SystemMessageChip(content: String) {
 }
 
 /**
- * Material 3 Expressive Chat Bubble with adaptive light/dark mode WhatsApp colors,
- * asymmetric corner radiuses, and memory-safe media rendering.
+ * Material 3 Expressive Chat Bubble for WhatsApp messages.
  */
 @Composable
 fun ExpressiveChatBubble(
@@ -474,131 +874,85 @@ fun ExpressiveChatBubble(
 ) {
     val isDark = isSystemInDarkTheme()
 
-    // Adaptive WhatsApp Material 3 Expressive palette
-    val bubbleColor = when {
-        isMe && !isDark -> Color(0xFFE7FFDB) // WhatsApp Expressive Light Green
-        isMe && isDark -> Color(0xFF005C4B)  // WhatsApp Expressive Dark Teal
-        !isMe && !isDark -> MaterialTheme.colorScheme.surfaceContainerHighest
-        else -> MaterialTheme.colorScheme.surfaceContainerHigh
+    val bubbleColor = if (isMe) {
+        if (isDark) Color(0xFF005C4B) else Color(0xFFE7FFDB)
+    } else {
+        if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLowest
     }
 
-    val bubbleTextColor = when {
-        isMe && isDark -> Color(0xFFE9EDEF)
-        isMe && !isDark -> Color(0xFF111B21)
-        !isMe && isDark -> Color(0xFFE9EDEF)
-        else -> MaterialTheme.colorScheme.onSurface
+    val bubbleShape = if (isMe) {
+        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 4.dp)
+    } else {
+        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 16.dp)
     }
 
-    val timeColor = if (isDark) Color(0xFF8696A0) else Color(0xFF667781)
-
-    // Expressive Asymmetrical Corner Radii (rounded with distinct speech tail)
-    val bubbleShape = RoundedCornerShape(
-        topStart = 16.dp,
-        topEnd = 16.dp,
-        bottomStart = if (isMe) 16.dp else 4.dp,
-        bottomEnd = if (isMe) 4.dp else 16.dp
-    )
+    val alignment = if (isMe) Alignment.End else Alignment.Start
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        horizontalAlignment = alignment
     ) {
         Surface(
-            color = bubbleColor,
             shape = bubbleShape,
-            tonalElevation = 1.dp,
+            color = bubbleColor,
+            tonalElevation = if (isMe) 2.dp else 1.dp,
             modifier = Modifier.widthIn(max = 320.dp)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                // Sender label for incoming group messages
+            Column(modifier = Modifier.padding(8.dp)) {
                 if (!isMe && message.sender.isNotBlank()) {
                     Text(
                         text = message.sender,
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = getWhatsAppAvatarColor(message.sender),
                         modifier = Modifier.padding(bottom = 2.dp)
                     )
                 }
 
-                // Media rendering (Photos or Attachments)
-                message.mediaName?.let { filename ->
-                    val file = File(mediaDir, filename)
-                    val isImage = filename.endsWith(".jpg", ignoreCase = true) ||
-                            filename.endsWith(".jpeg", ignoreCase = true) ||
-                            filename.endsWith(".png", ignoreCase = true) ||
-                            filename.endsWith(".webp", ignoreCase = true) ||
-                            filename.endsWith(".gif", ignoreCase = true)
-
-                    if (isImage) {
-                        LocalImage(
-                            file = file,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 140.dp, max = 260.dp)
-                                .padding(vertical = 4.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable { onImageClick(file) }
-                        )
-                    } else {
-                        NonImageAttachmentCard(
-                            file = file,
-                            filename = filename,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        )
-                    }
+                // Render media attachment if present
+                if (!message.mediaName.isNullOrBlank()) {
+                    val mediaFile = File(mediaDir, message.mediaName)
+                    MediaAttachmentCard(
+                        file = mediaFile,
+                        fileName = message.mediaName,
+                        onImageClick = onImageClick
+                    )
+                    Spacer(Modifier.height(4.dp))
                 }
 
-                // Message Text Content
-                val hasMedia = message.mediaName != null
-                val contentToShow = if (hasMedia) {
-                    val lower = message.content.lowercase()
-                    if (lower.contains("file attached") || lower.startsWith("<attached:")) {
-                        ""
-                    } else {
-                        message.content
-                    }
-                } else {
-                    message.content
-                }
+                // Render text if not just a file placeholder
+                val isRedundantPlaceholder = !message.mediaName.isNullOrBlank() &&
+                        (message.content.equals("${message.mediaName} (file attached)", ignoreCase = true) ||
+                         message.content.equals("<attached: ${message.mediaName}>", ignoreCase = true))
 
-                if (contentToShow.isNotEmpty()) {
+                if (!isRedundantPlaceholder && message.content.isNotBlank()) {
                     Text(
-                        text = contentToShow,
+                        text = message.content,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = bubbleTextColor,
-                        modifier = Modifier.padding(vertical = 2.dp)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
-                // Timestamp and Read Receipts
+                // Timestamp and read receipt
                 Row(
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(top = 2.dp),
+                    modifier = Modifier.align(Alignment.End),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    val timeOnly = if (message.timestamp.contains(",")) {
-                        message.timestamp.substringAfter(",").trim()
-                    } else {
-                        message.timestamp
-                    }
-
+                    val timeOnly = message.timestamp.substringAfter(',').trim()
                     Text(
                         text = timeOnly,
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = timeColor
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
-
                     if (isMe) {
                         Icon(
                             imageVector = Icons.Default.DoneAll,
-                            contentDescription = "Read receipt",
-                            modifier = Modifier.size(14.dp),
-                            tint = Color(0xFF53BDEB) // WhatsApp Blue ticks
+                            contentDescription = "Read",
+                            tint = Color(0xFF53BDEB),
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
@@ -608,107 +962,97 @@ fun ExpressiveChatBubble(
 }
 
 /**
- * Asynchronously decodes downsampled bitmaps and caches them in BitmapMemoryCache to eliminate UI lag.
+ * Attachment card rendering photos, audio, documents with memory caching.
  */
 @Composable
-fun LocalImage(file: File, modifier: Modifier = Modifier) {
-    val cachedBitmap = remember(file.absolutePath) {
-        BitmapMemoryCache.get(file.absolutePath)
-    }
+fun MediaAttachmentCard(
+    file: File,
+    fileName: String,
+    onImageClick: (File) -> Unit
+) {
+    val isImage = fileName.endsWith(".jpg", true) ||
+            fileName.endsWith(".jpeg", true) ||
+            fileName.endsWith(".png", true) ||
+            fileName.endsWith(".webp", true)
 
-    val bitmapState = produceState<ImageBitmap?>(initialValue = cachedBitmap, key1 = file.absolutePath) {
-        if (value == null) {
-            val decoded = withContext(Dispatchers.IO) {
-                decodeSampledBitmap(file, reqWidth = 600, reqHeight = 600)
-            }
-            decoded?.let {
-                BitmapMemoryCache.put(file.absolutePath, it)
-                value = it
+    if (isImage && file.exists()) {
+        val cached = BitmapMemoryCache.get(file.absolutePath)
+        val bitmapState = produceState(initialValue = cached, key1 = file.absolutePath) {
+            if (value == null) {
+                val decoded = withContext(Dispatchers.IO) {
+                    decodeSampledBitmap(file, reqWidth = 600, reqHeight = 600)
+                }
+                decoded?.let {
+                    BitmapMemoryCache.put(file.absolutePath, it)
+                    value = it
+                }
             }
         }
-    }
 
-    bitmapState.value?.let { bitmap ->
-        Image(
-            bitmap = bitmap,
-            contentDescription = "Attached photo",
-            modifier = modifier,
-            contentScale = ContentScale.Crop
-        )
-    } ?: Box(
-        modifier = modifier
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(10.dp)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(24.dp),
-            strokeWidth = 2.dp,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
+        bitmapState.value?.let { imgBitmap ->
+            Image(
+                bitmap = imgBitmap,
+                contentDescription = fileName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp, max = 220.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable { onImageClick(file) }
+            )
+        }
+    } else {
+        // Non-image file attachment card (Audio, PDF, Archive, Video)
+        val isAudio = fileName.endsWith(".mp3", true) || fileName.endsWith(".opus", true) || fileName.endsWith(".m4a", true) || fileName.endsWith(".aac", true)
+        val isPdf = fileName.endsWith(".pdf", true)
+        val isVideo = fileName.endsWith(".mp4", true) || fileName.endsWith(".mkv", true) || fileName.endsWith(".3gp", true)
 
-/**
- * Material 3 Expressive Card for documents, audio, videos, and general attachments.
- */
-@Composable
-fun NonImageAttachmentCard(file: File, filename: String, modifier: Modifier = Modifier) {
-    val lower = filename.lowercase()
-    val icon = when {
-        lower.endsWith(".pdf") -> Icons.Default.PictureAsPdf
-        lower.endsWith(".mp3") || lower.endsWith(".opus") || lower.endsWith(".m4a") || lower.endsWith(".wav") -> Icons.Default.AudioFile
-        lower.endsWith(".mp4") || lower.endsWith(".3gp") || lower.endsWith(".mkv") || lower.endsWith(".mov") -> Icons.Default.VideoFile
-        lower.endsWith(".doc") || lower.endsWith(".docx") || lower.endsWith(".txt") -> Icons.Default.Description
-        else -> Icons.Default.AttachFile
-    }
+        val icon = when {
+            isAudio -> Icons.Default.Audiotrack
+            isPdf -> Icons.Default.PictureAsPdf
+            isVideo -> Icons.Default.VideoFile
+            else -> Icons.Default.InsertDriveFile
+        }
 
-    val fileSizeText = remember(file) {
-        if (file.exists()) formatFileSize(file.length()) else ""
-    }
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.7f),
-        tonalElevation = 1.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(36.dp)
+            Row(
+                modifier = Modifier.padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(20.dp)
-                    )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = filename,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (fileSizeText.isNotEmpty()) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = fileSizeText,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = fileName,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    if (file.exists()) {
+                        Text(
+                            text = formatFileSize(file.length()),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -716,7 +1060,7 @@ fun NonImageAttachmentCard(file: File, filename: String, modifier: Modifier = Mo
 }
 
 /**
- * Fullscreen image preview modal.
+ * Fullscreen image preview modal dialog.
  */
 @Composable
 fun FullScreenImageDialog(file: File, onDismiss: () -> Unit) {
@@ -724,21 +1068,21 @@ fun FullScreenImageDialog(file: File, onDismiss: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { onDismiss() }
-                .padding(16.dp),
+                .background(Color.Black.copy(alpha = 0.9f))
+                .clickable { onDismiss() },
             contentAlignment = Alignment.Center
         ) {
             val bitmap = remember(file.absolutePath) {
-                BitmapMemoryCache.get(file.absolutePath) ?: decodeSampledBitmap(file, 1200, 1200)
+                BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
             }
             bitmap?.let {
                 Image(
                     bitmap = it,
-                    contentDescription = "Fullscreen preview",
+                    contentDescription = file.name,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp)),
-                    contentScale = ContentScale.Fit
+                        .padding(16.dp)
                 )
             }
         }
@@ -746,7 +1090,7 @@ fun FullScreenImageDialog(file: File, onDismiss: () -> Unit) {
 }
 
 /**
- * Material 3 Expressive Identity Selection Dialog.
+ * Identity Selection Dialog for choosing who "Me" is.
  */
 @Composable
 fun IdentitySelectionDialog(
@@ -758,48 +1102,52 @@ fun IdentitySelectionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Person, contentDescription = null) },
-        title = { Text("Select Your Identity") },
+        title = { Text("Who are you in this chat?") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Choose which participant represents you to align outgoing chat bubbles correctly.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    text = "Select your name so we can align your messages to the right side:",
+                    style = MaterialTheme.typography.bodySmall
                 )
-                senders.forEach { name ->
-                    val isSelected = name == currentSelected
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelected(name) }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 240.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(senders) { name ->
+                        val isSelected = name == currentSelected
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelected(name) }
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.size(32.dp)
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = name.take(1).uppercase(),
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                Surface(
+                                    shape = CircleShape,
+                                    color = getWhatsAppAvatarColor(name),
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = name.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
                                 }
+                                Text(
+                                    text = name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                )
                             }
-                            Text(
-                                text = name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                            )
                         }
                     }
                 }
@@ -814,10 +1162,14 @@ fun IdentitySelectionDialog(
 }
 
 /**
- * Material 3 Expressive Empty State view.
+ * Material 3 Expressive Empty State view for WhatsApp.
  */
 @Composable
-fun ExpressiveEmptyState(onImportClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ExpressiveEmptyState(
+    onImportClick: () -> Unit,
+    onBack: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
     ElevatedCard(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.elevatedCardColors(
@@ -834,28 +1186,28 @@ fun ExpressiveEmptyState(onImportClick: () -> Unit, modifier: Modifier = Modifie
         ) {
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = WhatsAppAccentGreen.copy(alpha = 0.16f),
                 modifier = Modifier.size(72.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Default.Chat,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(36.dp)
+                        painter = painterResource(id = R.drawable.ic_nav_whatsapp),
+                        contentDescription = "WhatsApp",
+                        tint = WhatsAppAccentGreen,
+                        modifier = Modifier.size(38.dp)
                     )
                 }
             }
 
             Text(
-                text = "No Chats Imported Yet",
+                text = "No WhatsApp Chats Saved",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
 
             Text(
-                text = "Import your exported WhatsApp chat (.txt or .zip) to view conversations and media attachments offline with authentic styling.",
+                text = "Import any WhatsApp export file (.txt or .zip with attachments). Every individual chat is saved separately so you can browse all your conversations offline.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -871,9 +1223,9 @@ fun ExpressiveEmptyState(onImportClick: () -> Unit, modifier: Modifier = Modifie
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text("💡 How to export from WhatsApp:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    Text("1. In WhatsApp, open the chat > tap ⋮ > More > Export chat", style = MaterialTheme.typography.labelSmall)
+                    Text("1. In WhatsApp, open any chat > tap ⋮ > More > Export chat", style = MaterialTheme.typography.labelSmall)
                     Text("2. Select 'Attach Media' (.zip) or 'Without Media' (.txt)", style = MaterialTheme.typography.labelSmall)
-                    Text("3. Tap 'Import Chat File' below to browse", style = MaterialTheme.typography.labelSmall)
+                    Text("3. Tap 'Import Chat File' below to save it into Wasm", style = MaterialTheme.typography.labelSmall)
                 }
             }
 
@@ -885,6 +1237,18 @@ fun ExpressiveEmptyState(onImportClick: () -> Unit, modifier: Modifier = Modifie
                 Icon(Icons.Default.FileOpen, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Import Chat File", fontWeight = FontWeight.SemiBold)
+            }
+
+            if (onBack != null) {
+                OutlinedButton(
+                    onClick = onBack,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Back to Platform Selection")
+                }
             }
         }
     }

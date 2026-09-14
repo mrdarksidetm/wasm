@@ -1,15 +1,23 @@
 package com.mrdartsidetm.wasm.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * MessageEntity represents a single chat bubble in the database.
  * We store the raw sender name to compare against the 'User Identity' later.
+ * Linked to WhatsAppConversationEntity via conversationId.
  */
-@Entity(tableName = "chat_messages")
+@Entity(
+    tableName = "chat_messages",
+    indices = [
+        Index(value = ["conversationId"])
+    ]
+)
 data class MessageEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val conversationId: String = "default",
     val timestamp: String, // Format: "12/05/23, 14:45"
     val sender: String,    // The name as it appears in the text file
     val content: String,   // The actual message text

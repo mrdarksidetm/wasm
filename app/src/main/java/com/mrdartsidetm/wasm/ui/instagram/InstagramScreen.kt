@@ -42,6 +42,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.mrdartsidetm.wasm.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -99,7 +101,8 @@ fun getAvatarColor(name: String): Color {
 @Composable
 fun InstagramScreen(
     viewModel: InstagramViewModel,
-    onImportClick: () -> Unit
+    onImportClick: () -> Unit,
+    onBackToPlatformChooser: (() -> Unit)? = null
 ) {
     val account by viewModel.account.collectAsStateWithLifecycle()
     val importState by viewModel.importUiState.collectAsStateWithLifecycle()
@@ -166,13 +169,18 @@ fun InstagramScreen(
             label = "InstagramFlowTransition"
         ) { step ->
             when (step) {
-                0 -> InstagramEmptyState(onImportClick = onImportClick, modifier = Modifier.fillMaxSize())
+                0 -> InstagramEmptyState(
+                    onImportClick = onImportClick,
+                    onBack = onBackToPlatformChooser,
+                    modifier = Modifier.fillMaxSize()
+                )
                 1 -> account?.let { acc ->
                     InstagramLandingPage(
                         account = acc,
                         onDiveClick = { viewModel.diveIn() },
                         onReimportClick = onImportClick,
-                        onClearClick = { showClearDialog = true }
+                        onClearClick = { showClearDialog = true },
+                        onBack = onBackToPlatformChooser
                     )
                 }
                 2 -> account?.let { acc ->
@@ -259,7 +267,11 @@ fun InstagramScreen(
  * Empty State inviting user to import an Instagram ZIP export.
  */
 @Composable
-fun InstagramEmptyState(onImportClick: () -> Unit, modifier: Modifier = Modifier) {
+fun InstagramEmptyState(
+    onImportClick: () -> Unit,
+    onBack: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier.padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -273,10 +285,10 @@ fun InstagramEmptyState(onImportClick: () -> Unit, modifier: Modifier = Modifier
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Default.CameraAlt,
+                painter = painterResource(id = R.drawable.ic_nav_instagram),
                 contentDescription = "Instagram",
                 tint = Color.White,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(46.dp)
             )
         }
 
@@ -309,6 +321,18 @@ fun InstagramEmptyState(onImportClick: () -> Unit, modifier: Modifier = Modifier
             Spacer(Modifier.width(8.dp))
             Text("Import Instagram ZIP", fontWeight = FontWeight.SemiBold)
         }
+
+        if (onBack != null) {
+            Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = onBack,
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Icon(Icons.Default.ArrowBack, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Back to Platform Selection")
+            }
+        }
     }
 }
 
@@ -321,13 +345,21 @@ fun InstagramLandingPage(
     account: InstagramAccountEntity,
     onDiveClick: () -> Unit,
     onReimportClick: () -> Unit,
-    onClearClick: () -> Unit
+    onClearClick: () -> Unit,
+    onBack: (() -> Unit)? = null
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back to Platform Selection")
+                        }
+                    }
+                },
                 title = {
                     Text(
                         "Instagram Export",

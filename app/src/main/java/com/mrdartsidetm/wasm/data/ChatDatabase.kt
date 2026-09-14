@@ -9,11 +9,12 @@ import androidx.room.RoomDatabase.JournalMode
 @Database(
     entities = [
         MessageEntity::class,
+        WhatsAppConversationEntity::class,
         InstagramAccountEntity::class,
         InstagramConversationEntity::class,
         InstagramMessageEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class ChatDatabase : RoomDatabase() {

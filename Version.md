@@ -310,3 +310,49 @@
 
 ### Status
 - 100% Instagram HTML message compatibility, media collages, gallery viewer, and production APK generation verified and published.
+
+---
+
+## [0.5.0] - 2026-09-14
+### Added
+- **App Icons (Original, Monochrome, Adaptive & Round)**:
+  - Added Android adaptive icons conforming to Android 8.0+ (API 26+) and themed icons on Android 13+ (API 33+):
+    - es/drawable/ic_launcher_background.xml: Precision vector linear gradient (#758AEF to #062362) from Wasm - Original AppIcon.svg.
+    - es/drawable/ic_launcher_foreground.xml: Multi-layer vector badge (polygonal backdrop, yellow/orange gear flower, and sparkle stars).
+    - es/drawable/ic_launcher_monochrome.xml: Monochrome vector badge for Android 13+ dynamic system theming from Wasm - Monochrome AppIcon.svg.
+    - es/drawable/ic_launcher_original.xml: Unified full-resolution vector drawable combining background and foreground layers.
+    - es/mipmap-anydpi-v26/ic_launcher.xml and ic_launcher_round.xml: Adaptive icon definitions referencing background, foreground, and monochrome vectors.
+    - Updated AndroidManifest.xml with ndroid:icon="@mipmap/ic_launcher" and ndroid:roundIcon="@mipmap/ic_launcher_round".
+- **Custom Navigation & Brand Icons**:
+  - Implemented vector drawables in es/drawable/ic_nav_whatsapp.xml and es/drawable/ic_nav_instagram.xml generated directly from the user-provided SVGs (whatsapp-svgrepo-com.svg and instagram-svgrepo-com.svg).
+  - Integrated custom brand drawables across the Navigation Bar, Platform Chooser buttons, Home screen summary cards, empty states, and conversation headers.
+- **Unified Navigation Architecture**:
+  - Re-architected bottom NavigationBar into three cohesive Material 3 Expressive destinations:
+    1. **Home**: High-level archive hub showing platform statistics, quick overview cards, direct import triggers, and offline storage privacy guarantees (HomeScreen.kt).
+    2. **Messages**: Consolidated messaging portal with platform selection for WhatsApp and Instagram (PlatformChooserScreen.kt).
+    3. **Settings**: Centralized control panel for user sender identity configuration, storage metrics, data clearance, cache management, and application diagnostics (SettingsScreen.kt).
+  - **Platform Chooser ("Choose the Platform")**:
+    - Centered Material 3 Globe vector icon (no emoji) in an expressive circular tonal container.
+    - Prominent bold heading "Choose the Platform".
+    - Two large, cohesive Material 3 interactive cards for WhatsApp and Instagram with custom SVG icons, badge counts, and chevron navigation.
+- **Individual WhatsApp Conversation Persistence**:
+  - Re-architected WhatsApp data architecture to mirror Instagram's thread-based storage pattern:
+    - Created WhatsAppConversationEntity (whatsapp_conversations table) tracking id, 	itle, lastMessage, lastTimestamp, messageCount, and mediaDirName.
+    - Extended MessageEntity (chat_messages table) with conversationId and SQLite index on conversationId.
+    - Upgraded ChatDao with individual conversation queries (getAllConversations, getConversation, searchConversations, deleteConversation, getMessagesForConversation, searchMessagesInConversation, getTotalConversationCount, getTotalMessageCount).
+    - Bumped ChatDatabase version to 4 with destructive migration fallback.
+    - Updated ChatViewModel to save imported .txt and .zip archives as individual persistent conversations without wiping previous chats.
+    - Provided conversation-specific media subdirectories (media/<conversationId>/) preventing attachment file collisions across multiple archives.
+    - Enhanced ChatScreen.kt with a 2-level navigation flow: WhatsAppConversationsListScreen (searchable chat cards with avatars, timestamps, message badges, and individual deletion) and WhatsAppChatDetailScreen (full chat bubble stream with back button to chat list).
+- **Home-Only App Exit Enforcement (BackHandler)**:
+  - Enforced strict Android back-navigation hierarchy ensuring the application can only be exited from the Home page:
+    - On Settings page: Back navigates to Home page.
+    - On Platform Chooser: Back navigates to Home page.
+    - On WhatsApp chat list: Back navigates to Platform Chooser.
+    - Inside WhatsApp individual chat thread: Back closes the chat and returns to WhatsApp chat list.
+    - On Instagram landing/overview: Back navigates to Platform Chooser.
+    - Inside Instagram DM thread, conversation details, or expanded media viewer: Back progressively navigates back through the Instagram view hierarchy.
+    - On Home page: No BackHandler interceptor active; pressing system back finishes the Activity and exits the app cleanly.
+
+### Status
+- 100% App icons (original & monochrome), home-only exit navigation, individual WhatsApp chat persistence, custom SVG nav icons, Home page, Settings page, and cohesive Messages platform chooser implemented.
