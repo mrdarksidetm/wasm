@@ -6,9 +6,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabase.JournalMode
 
-@Database(entities = [MessageEntity::class], version = 2, exportSchema = false)
+@Database(
+    entities = [
+        MessageEntity::class,
+        InstagramAccountEntity::class,
+        InstagramConversationEntity::class,
+        InstagramMessageEntity::class
+    ],
+    version = 3,
+    exportSchema = false
+)
 abstract class ChatDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
+    abstract fun instagramDao(): InstagramDao
 
     companion object {
         @Volatile

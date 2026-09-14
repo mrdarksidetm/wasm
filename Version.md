@@ -202,3 +202,84 @@
 
 ### Status
 - 100% Production Ready APK and GitHub Actions automation complete and live.
+
+---
+
+## [0.4.0] - 2026-09-14
+### Added
+- **Instagram Message Compatibility & Dedicated Section**:
+  - Top-level Material 3 Expressive tab navigation in `MainActivity.kt` providing seamless switching between **WhatsApp** and **Instagram** sections while preserving active state, searches, and scroll positions.
+  - Dedicated Instagram storage and Room database entities (`InstagramAccountEntity`, `InstagramConversationEntity`, `InstagramMessageEntity`) with indices on `conversationId` and `epochTime` for high-performance offline querying.
+  - Added `InstagramDao.kt` supporting reactive flows, conversation search, message search, and atomic batch insertions.
+  - Bumped `ChatDatabase` to version `3` with Room destructive migration fallback.
+- **Smart Folder Hierarchy & Auto-Detection (InstagramZipExtractor.kt)**:
+  - Memory-safe, streaming ZIP decompression with Zip Slip path traversal vulnerability protection.
+  - Selective extraction filter: automatically identifies and isolates `messages/`, `chats.html`, `start_here.html`, and chat media (`photos/`, `videos/`, `audio/`, `gifs/`), intentionally bypassing bulky non-message folders (posts, stories, comments) to preserve 4GB host RAM.
+  - Resilient directory normalizer: adapts dynamically to varying Meta export structures (root messages, `your_instagram_activity/messages/`, or nested folder exports).
+  - Automatically parses account username, friendly display name, and export timestamp from metadata or export filename.
+- **Instagram Landing Page & Guided "Let's Dive" Flow**:
+  - Material 3 Expressive Account Landing screen displaying user avatar, `@account_handle`, friendly display name, export date, and summary cards for total conversations, message counts, and available media types.
+  - Prominent, gradient-styled **"Let's Dive"** action button featuring official Instagram brand palette (`Color(0xFF833AB4)` to `Color(0xFFFCAF45)`).
+  - Smooth, hardware-accelerated **Right-to-Left animated slide transition** (`slideInHorizontally` + `fadeIn` / `slideOutHorizontally` + `fadeOut`) upon clicking "Let's Dive" into the conversation inbox.
+- **Instagram Inbox & Conversation List**:
+  - TopAppBar featuring account username, live message counter, and integrated real-time search filtering.
+  - Filter tabs separating "All", "Inbox", and "Requests" conversations with dynamic counts.
+  - Conversation list items displaying user initial avatar circles with deterministic color hashing, conversation title, latest message preview with media icons, formatted timestamp, and request badges.
+  - Seamless tap transition into individual DM threads.
+- **Instagram Direct Message (DM) View & Complete Media Playback**:
+  - Authentic Instagram Direct styling:
+    - Outgoing bubbles: right-aligned with vibrant Instagram Direct purple/blue gradient (`InstagramDmOutgoingGradient`).
+    - Incoming bubbles: left-aligned with rounded neutral gray surface containers (`Color(0xFF262626)` dark / `Color(0xFFEFEFEF)` light).
+    - Asymmetrical rounded corners with tail curvature.
+    - Emoji reaction pills attached below message bubbles (e.g. `❤️ Kajal Sinha`, `👍`).
+  - **Photos**: Downsampled memory-safe bitmap decoding via `BitmapMemoryCache` (LruCache) with fullscreen viewer dialog.
+  - **Videos**: Local video preview card with duration, thumbnail generation via `MediaMetadataRetriever`, and fullscreen `InstagramVideoPlayerDialog` using native Android `VideoView` and `MediaController`.
+  - **Voice Notes (Audio)**: Authentic Instagram audio bubble powered by `AudioPlayerManager.kt` using native `android.media.MediaPlayer` for local `.mp4` audio playback, featuring play/pause toggle, linear progress scrubber, elapsed time, and duration.
+  - **Stickers & GIFs**: Native animated GIF playback via `ImageDecoder` and `AnimatedImageDrawable` on API 28+ (with downsampled fallback on API 26-27).
+  - **Reels & External Links**: Shared Reel preview card with Instagram Reel iconography, post description/title, and deep-link click handler.
+- **Testing & Verification**:
+  - Created unit test suite `InstagramHtmlParserTest.kt` verifying account extraction, chat list indexing, message entity parsing, media detection, reactions, and real export parsing against `D:\code\temp\instagram-kajal.23.sinha-2026-09-14-sxQHlayj`.
+
+### Status
+- 100% Instagram message compatibility, media playback, tabs, and landing page flow implemented.
+---
+
+## [0.4.1] - 2026-09-14
+### Added
+- **Multi-Media Grouping & Collage Grid in Chat Bubbles**:
+  - Enhanced `InstagramHtmlParser.kt` to extract all photos, videos, and audios contained in single or simultaneous message blocks into `mediaPaths` list.
+  - Implemented `InstagramMediaCollage` component presenting simultaneous media in authentic Instagram DM layouts:
+    - 1 media: Full aspect-ratio photo/video bubble.
+    - 2 media: Two equal side-by-side tiles with smooth corner radii.
+    - 3 media: Asymmetric 1 large + 2 stacked side tiles.
+    - 4+ media: 2x2 square tile grid with `+N` badge indicating additional items.
+- **Expanded Media Viewer Page**:
+  - Added full vertical scrollable media viewer (`InstagramExpandedMediaViewerScreen`) opened when tapping any collage or media group.
+  - Long-press / hold gesture on any media item enters selection mode with checkmark badge and selection borders.
+  - 3-dots overflow menu on the top-right offering "Download into Gallery", "Select All", and "Deselect All".
+  - Dedicated bottom action bar displaying "Save to Gallery (N items)" when items are selected.
+- **Gallery Downloader (GalleryDownloader.kt)**:
+  - Implemented direct Android Gallery exporter using native Android `MediaStore.Images` and `MediaStore.Video` APIs with Scoped Storage support for Android 10+ (`Pictures/Wasm` and `Movies/Wasm`) and `MediaScannerConnection` fallback for Android 8-9.
+- **Conversation Details & 3-Column Square Media Gallery**:
+  - Clicking conversation account title / username in the DM TopAppBar opens `InstagramConversationDetailsScreen`.
+  - Centered header displaying large avatar circle (96dp), account name, message count, and total media counts in the middle.
+  - Segmented section tabs:
+    - **Media**: 3-column square grid (`LazyVerticalGrid(columns = GridCells.Fixed(3))`) displaying all photos and videos exchanged in the chat in square aspect ratio, with video camera and duration badges. Tapping any item opens the full expanded viewer.
+    - **Voices**: Chronological list of playable voice notes.
+    - **Links**: Shared Instagram reels and web links.
+- **Universal Voice Note Compatibility**:
+  - Clarified and confirmed universal audio compatibility: Meta exports Instagram voice notes as mobile `.mp4` audio containers (AAC stream). `AudioPlayerManager.kt` natively plays both `.mp4` and `.mp3` containers as well as `.m4a`, `.aac`, and `.wav` with waveform scrubber and duration indicators.
+
+### Status
+- 100% Grouped media collages, vertical expanded media viewer with hold-to-select, 3-dots Gallery download, and 3-column conversation media gallery implemented.
+---
+
+## [0.4.2] - 2026-09-14
+### Hardened & CI/CD Trigger
+- **Manifest Permission Declaration**:
+  - Added ndroid.permission.WRITE_EXTERNAL_STORAGE with ndroid:maxSdkVersion="28" in AndroidManifest.xml ensuring backward-compatible gallery export on Android 8 & 9 (API 26-28), while retaining Scoped Storage on Android 10+ (API 29+).
+- **GitHub Actions Remote Build Trigger Preparation**:
+  - Verified and staged all changes for push to main branch to trigger remote CI/CD compilation and universal production APK generation.
+
+### Status
+- 100% Hardening and verification complete; ready for remote build pipeline execution.
