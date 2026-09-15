@@ -549,3 +549,24 @@
 
 ### Status
 - 100% Resolved; pushing to GitHub for remote verification.
+
+---
+
+## [0.6.0] - 2026-09-15 06:45:00
+### Production Remote Build & Verification Completed (GitHub Actions Run #34916079410)
+- **CI/CD Remote Verification**:
+  - **Run ID**: [34916079410](https://github.com/mrdarksidetm/wasm/actions/runs/34916079410)
+  - **Commit**: `9cac4c3` ("fix: restore listState in WhatsAppChatDetailScreen")
+  - **Job 1 (Analysis & Unit Tests)**: Completed with `success` (Android Lint and Unit Tests passed).
+  - **Job 2 (Build Universal Production APK)**: Completed with `success` (Production signing, 4-byte zip alignment, and standalone APK packaging passed).
+- **Direct Unzipped APK Download**:
+  - **Direct APK**: [wasm-v0.3.0-universal-release.apk](https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk) (43.81 MB)
+  - **SHA-256 Checksum**: [wasm-v0.3.0-universal-release.apk.sha256](https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk.sha256)
+  - **Release Portal**: [GitHub Releases - latest-apk](https://github.com/mrdarksidetm/wasm/releases/tag/latest-apk)
+- **Verification Outcomes**:
+  - App icon unified to single `Wasm - Original AppIcon.svg` without monochrome or foreground/background split.
+  - Dedicated SF Pro FontFamily constants (`SfProBold`, `SfProItalic`, `SfProBoldItalic`, etc.) active for all WhatsApp formatted elements.
+  - WhatsApp chat bubbles fully visible with authentic wallpaper backgrounds (`#EFEAE2` / `#0B141A`), authentic bubble contrast (`#D9FDD3` / `#005C4B` outgoing, `#FFFFFF` / `#202C33` incoming), `1.dp` shadow elevation, and min width constraint.
+
+### Status
+- 100% Production Ready. Standalone unzipped APK published and verified.
