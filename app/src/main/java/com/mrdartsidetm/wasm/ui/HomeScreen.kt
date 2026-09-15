@@ -1,344 +1,347 @@
 package com.mrdartsidetm.wasm.ui
 
+import android.graphics.BitmapFactory
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mrdartsidetm.wasm.R
+import com.mrdartsidetm.wasm.data.UserPreferencesRepository
 import com.mrdartsidetm.wasm.ui.instagram.InstagramViewModel
+import java.io.File
+import java.text.NumberFormat
+import java.util.Calendar
+import java.util.Locale
 
 /**
  * Material 3 Expressive Home Screen for Wasm.
- * Provides a high-level overview of saved archives, quick stats for WhatsApp and Instagram,
- * and direct actions to browse messages or import new chat files.
+ * Provides a pristine, clean canvas layout:
+ * - Status bar space consideration.
+ * - Dynamic time-based heading ("Good Morning" / "Good Afternoon" / "Good Evening").
+ * - Horizontal horizon profile avatar icon opening the Personalize page with a top-to-bottom transition.
+ * - Frosted glass rectangle animated card with smooth 0-to-total message count animation
+ *   and subtle primary/tertiary ambient background colors.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     whatsappViewModel: ChatViewModel,
     instagramViewModel: InstagramViewModel,
-    onNavigateToMessages: () -> Unit,
-    onOpenWhatsApp: () -> Unit,
-    onOpenInstagram: () -> Unit,
-    onImportWhatsApp: () -> Unit,
-    onImportInstagram: () -> Unit,
+    prefs: UserPreferencesRepository,
+    onNavigateToMessages: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
+    onOpenWhatsApp: () -> Unit = {},
+    onOpenInstagram: () -> Unit = {},
+    onImportWhatsApp: () -> Unit = {},
+    onImportInstagram: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val waConversations by whatsappViewModel.conversations.collectAsStateWithLifecycle()
+    // Collect messages and archive stats
     val waTotalMessages by whatsappViewModel.totalMessageCount.collectAsStateWithLifecycle()
-
-    val igAccount by instagramViewModel.account.collectAsStateWithLifecycle()
     val igConversations by instagramViewModel.conversations.collectAsStateWithLifecycle()
+    val igTotalMessages = remember(igConversations) { igConversations.sumOf { it.totalMessages } }
+    val totalImportedMessages = waTotalMessages + igTotalMessages
 
-    val scrollState = rememberScrollState()
+    // Personalized user profile preferences
+    val savedPhotoPath by prefs.profileImagePath.collectAsStateWithLifecycle(initialValue = null)
+    val savedPersonName by prefs.personName.collectAsStateWithLifecycle(initialValue = "")
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.app_icon),
-                            contentDescription = "Wasm Logo",
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                        )
-                        Column {
-                            Text(
-                                text = "Wasm",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Universal Chat Archive",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToMessages) {
-                        Icon(
-                            imageVector = Icons.Default.Forum,
-                            contentDescription = "Go to Messages"
-                        )
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            // Hero Welcome Card
-            Card(
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(8.dp)
-                        ) {}
-                        Text(
-                            text = "OFFLINE ARCHIVE",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Text(
-                        text = "Your Universal Chat Archive",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-
-                    Text(
-                        text = "View, search, and preserve exported chats from WhatsApp and Instagram completely offline with authentic speech bubbles, media playback, and high performance.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    FilledTonalButton(
-                        onClick = onNavigateToMessages,
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(Icons.Default.Forum, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Open Messages", fontWeight = FontWeight.SemiBold)
-                    }
-                }
+    val profileBitmap = remember(savedPhotoPath) {
+        savedPhotoPath?.let { path ->
+            try {
+                val file = File(path)
+                if (file.exists() && file.length() > 0) {
+                    BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
+                } else null
+            } catch (e: Exception) {
+                null
             }
+        }
+    }
 
-            // Section Heading: Platforms
-            Text(
-                text = "Platforms",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+    // Dynamic greeting based on current system time
+    val currentHour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val timeGreeting = remember(currentHour) {
+        when (currentHour) {
+            in 4..11 -> "Good Morning"
+            in 12..16 -> "Good Afternoon"
+            else -> "Good Evening"
+        }
+    }
 
-            // WhatsApp Overview Card
-            HomePlatformCard(
-                platformName = "WhatsApp",
-                iconResId = R.drawable.ic_nav_whatsapp,
-                accentColor = Color(0xFF25D366),
-                statSummary = if (waConversations.isNotEmpty()) {
-                    "${waConversations.size} individual ${if (waConversations.size == 1) "chat" else "chats"} saved • $waTotalMessages messages"
-                } else {
-                    "No chats imported yet"
-                },
-                description = "Support for .txt transcripts, .zip media archives, voice notes, and contact identity switching.",
-                hasData = waConversations.isNotEmpty(),
-                onOpen = onOpenWhatsApp,
-                onImport = onImportWhatsApp
-            )
+    // Controls top-to-bottom Personalize screen overlay
+    var isPersonalizeOpen by rememberSaveable { mutableStateOf(false) }
 
-            // Instagram Overview Card
-            HomePlatformCard(
-                platformName = "Instagram",
-                iconResId = R.drawable.ic_nav_instagram,
-                accentColor = Color(0xFFE1306C),
-                statSummary = if (igAccount != null) {
-                    val accName = igAccount!!.displayName.ifEmpty { igAccount!!.accountName }
-                    "$accName • ${igConversations.size} conversations"
-                } else {
-                    "No export archive imported yet"
-                },
-                description = "Direct message threads, media collages, voice note player, and gallery export support.",
-                hasData = igAccount != null,
-                onOpen = onOpenInstagram,
-                onImport = onImportInstagram
-            )
+    // Counter animation from 0 to totalImportedMessages
+    var targetCount by remember { mutableIntStateOf(0) }
+    LaunchedEffect(totalImportedMessages) {
+        targetCount = totalImportedMessages
+    }
 
-            // Security & Privacy Assurance Notice
-            Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                modifier = Modifier.fillMaxWidth()
+    val animatedCount by animateIntAsState(
+        targetValue = targetCount,
+        animationSpec = tween(
+            durationMillis = 1400,
+            easing = FastOutSlowInEasing
+        ),
+        label = "totalMessagesCounterAnimation"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Main Home Screen Canvas
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp)
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Top Horizon Row: "Good X" heading on left, Profile avatar on right
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        modifier = Modifier.size(42.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Shield,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column {
+                    Text(
+                        text = timeGreeting,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.5).sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    if (savedPersonName.isNotBlank()) {
                         Text(
-                            text = "100% Offline & Private",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Zero network requests. All chat messages and media files are stored strictly on your local device.",
-                            style = MaterialTheme.typography.bodySmall,
+                            text = savedPersonName,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Normal
+                            ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-    }
-}
-
-/**
- * Reusable cohesive platform summary card for the Home screen.
- */
-@Composable
-private fun HomePlatformCard(
-    platformName: String,
-    iconResId: Int,
-    accentColor: Color,
-    statSummary: String,
-    description: String,
-    hasData: Boolean,
-    onOpen: () -> Unit,
-    onImport: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
+                // Profile Avatar Icon
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = accentColor.copy(alpha = 0.14f),
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(id = iconResId),
-                            contentDescription = "$platformName Icon",
-                            tint = accentColor,
-                            modifier = Modifier.size(26.dp)
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                    shadowElevation = 3.dp,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { isPersonalizeOpen = true }
                         )
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (profileBitmap != null) {
+                            Image(
+                                bitmap = profileBitmap,
+                                contentDescription = "Profile Avatar",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Open Personalize",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
                     }
                 }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = platformName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = statSummary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (hasData) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = if (hasData) FontWeight.SemiBold else FontWeight.Normal
-                    )
-                }
             }
 
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Rectangle Animated Card with Frosted Glass Effect & Primary/Tertiary Ambient Background
+            val frostedGlassBrush = Brush.linearGradient(
+                colors = listOf(
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.70f)
+                )
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            val frostedBorderBrush = Brush.linearGradient(
+                colors = listOf(
+                    Color.White.copy(alpha = 0.40f),
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.30f),
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f)
+                )
+            )
+
+            Card(
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                border = BorderStroke(1.dp, frostedBorderBrush),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(frostedGlassBrush)
             ) {
-                if (hasData) {
-                    Button(
-                        onClick = onOpen,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    // Card Header with Activity Icon
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text("Open $platformName", fontWeight = FontWeight.SemiBold)
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.ChatBubbleOutline,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "Imported Archives",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                    OutlinedButton(
-                        onClick = onImport,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Import More")
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Animated 0 -> Total Messages Count Display
+                    val formattedNumber = remember(animatedCount) {
+                        NumberFormat.getNumberInstance(Locale.getDefault()).format(animatedCount)
                     }
-                } else {
-                    Button(
-                        onClick = onImport,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.FileOpen, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Import $platformName Chat", fontWeight = FontWeight.SemiBold)
+
+                    Text(
+                        text = formattedNumber,
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-1.5).sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = "Total Messages Imported",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    if (totalImportedMessages > 0) {
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (waTotalMessages > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                                ) {
+                                    Text(
+                                        text = "WhatsApp: ${NumberFormat.getNumberInstance().format(waTotalMessages)}",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                            if (igTotalMessages > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                                ) {
+                                    Text(
+                                        text = "Instagram: ${NumberFormat.getNumberInstance().format(igTotalMessages)}",
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
+
+            // Remaining space is a pristine blank canvas as instructed
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
+        // Top-to-Bottom Animated Personalize Page Overlay
+        AnimatedVisibility(
+            visible = isPersonalizeOpen,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = tween(400, easing = FastOutSlowInEasing)
+            ) + fadeIn(animationSpec = tween(400)),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = tween(350, easing = FastOutSlowInEasing)
+            ) + fadeOut(animationSpec = tween(350))
+        ) {
+            PersonalizeScreen(
+                prefs = prefs,
+                onDismiss = { isPersonalizeOpen = false },
+                onNavigateToSettings = {
+                    isPersonalizeOpen = false
+                    onNavigateToSettings()
+                }
+            )
         }
     }
 }

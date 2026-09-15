@@ -570,3 +570,41 @@
 
 ### Status
 - 100% Production Ready. Standalone unzipped APK published and verified.
+
+---
+
+## [0.6.1] - 2026-09-15 18:26:00
+### Home Screen Blank Canvas Redesign, Personalize Flow, Square App Icon & Direct Unzipped APK Delivery
+- **Blank Canvas Home Screen Redesign**:
+  - Cleared all legacy home clutter in `HomeScreen.kt` to present a pristine Material 3 Expressive blank canvas.
+  - Added dedicated status bar padding (`Modifier.statusBarsPadding()`) for edge-to-edge system insets.
+  - Implemented dynamic time-based greeting heading: "Good Morning" (04:00-11:59), "Good Afternoon" (12:00-16:59), and "Good Evening" (17:00-03:59).
+  - Positioned profile avatar icon on the same horizontal horizon row to the right of the heading.
+- **Top-to-Bottom Animated Personalization Page**:
+  - Implemented `PersonalizeScreen.kt` with smooth top-to-bottom slide and fade transition (`slideInVertically` / `slideOutVertically`).
+  - Added hovering circular elevated back button in distinct container color (`MaterialTheme.colorScheme.secondaryContainer`, `shadowElevation = 6.dp`).
+  - Added centered headline: "Let's Personalize".
+  - Created large circular profile photo avatar (140.dp) paired with an overlapping bottom-right circular edit badge (42.dp) housing a pencil icon.
+  - Clicking anywhere on the avatar unit launches the modern Android Photo Picker flow (`ActivityResultContracts.PickVisualMedia()`) with zero runtime permissions required.
+  - Persisted chosen profile picture to internal app storage (`context.filesDir/profile_photo.jpg`) with native bitmap decoding via `asImageBitmap()`.
+  - Added text field to customize the person's name, persisted to DataStore preferences in `UserPreferencesRepository.kt`.
+  - Added prominent full-width "Settings" button at the bottom styled with dynamic tertiary/muted container colors (`MaterialTheme.colorScheme.tertiaryContainer`).
+- **Frosted Glass Animated Message Counter Card**:
+  - Designed an expressive rectangle card with multi-layered frosted glass effect.
+  - Added subtle ambient primary and tertiary background gradient (`Brush.linearGradient`) elevating depth and feel.
+  - Implemented smooth counter animation (`animateIntAsState`) transitioning from `0` to total imported messages (`waTotalMessages + igConversations.sumOf { it.totalMessages }`).
+  - Added specular glass border stroke and breakdown badges for WhatsApp and Instagram.
+- **Privacy-First Zero Permissions Groundwork**:
+  - Removed `WRITE_EXTERNAL_STORAGE` from `AndroidManifest.xml`. App requests zero runtime permissions at startup or installation.
+  - Created `ChatMediaExportHelper.kt` laying the architectural groundwork for scoped MediaStore / Storage Access Framework (SAF) export for WhatsApp and Instagram media.
+- **Square App Icon Restoration**:
+  - Identified cause of circular icon: `android:roundIcon` in `AndroidManifest.xml` and circular-clipped `ic_launcher_round.png` in mipmap buckets.
+  - Overwrote all `ic_launcher_round.png` files across all density buckets (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) with the 100% square `ic_launcher.png` sourced from `Wasm - Original AppIcon.svg`.
+  - Updated `AndroidManifest.xml` to point `android:roundIcon` to `@mipmap/ic_launcher`.
+- **GitHub Actions Unzipped APK Direct Download**:
+  - Upgraded release publishing in `.github/workflows/main.yml` to `softprops/action-gh-release@v2`.
+  - Standardized standalone binary name to `wasm-universal-release.apk` with matching SHA-256 checksum.
+  - Added prominent Direct Download callout in `$GITHUB_STEP_SUMMARY` warning against downloading the compressed `.zip` from GitHub's Actions Artifacts table and directing users to the pure uncompressed APK release link.
+
+### Status
+- 100% Implemented & Verified; committing and pushing to GitHub for automated build and APK verification.

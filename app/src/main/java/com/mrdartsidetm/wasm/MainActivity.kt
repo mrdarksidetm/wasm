@@ -235,9 +235,13 @@ class MainActivity : ComponentActivity() {
                             0 -> HomeScreen(
                                 whatsappViewModel = whatsappViewModel,
                                 instagramViewModel = instagramViewModel,
+                                prefs = prefs,
                                 onNavigateToMessages = {
                                     selectedTab = 1
                                     activeMessagesPlatform = null
+                                },
+                                onNavigateToSettings = {
+                                    selectedTab = 2
                                 },
                                 onOpenWhatsApp = {
                                     selectedTab = 1

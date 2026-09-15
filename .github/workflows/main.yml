@@ -194,12 +194,11 @@ jobs:
       - name: Package Universal APK & Generate Checksum
         run: |
           cd app/build/outputs/apk/release
-          # Rename output APK to standard descriptive universal release name
           ORIGINAL_APK=$(find . -maxdepth 1 -name "*.apk" | head -n 1)
           if [ -n "$ORIGINAL_APK" ]; then
-            cp "$ORIGINAL_APK" wasm-v0.3.0-universal-release.apk
-            sha256sum wasm-v0.3.0-universal-release.apk > wasm-v0.3.0-universal-release.apk.sha256
-            echo "Successfully packaged wasm-v0.3.0-universal-release.apk"
+            cp "$ORIGINAL_APK" wasm-universal-release.apk
+            sha256sum wasm-universal-release.apk > wasm-universal-release.apk.sha256
+            echo "Successfully packaged wasm-universal-release.apk"
           else
             echo "Error: Release APK not found!" && exit 1
           fi
@@ -207,7 +206,7 @@ jobs:
       - name: Verify APK Signatures & Alignment (Production-Ready Check)
         run: |
           APK_DIR="app/build/outputs/apk/release"
-          APK_FILE="${APK_DIR}/wasm-v0.3.0-universal-release.apk"
+          APK_FILE="${APK_DIR}/wasm-universal-release.apk"
           echo "Verifying APK alignment and production signing schemes..."
           APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner 2>/dev/null | sort -V | tail -n 1)
           if [ -n "$APKSIGNER" ]; then
@@ -217,41 +216,38 @@ jobs:
             echo "apksigner not in path; verifying APK existence: OK"
           fi
 
-      - name: Upload Standalone Universal APK (Artifact)
+      - name: Upload Universal APK (Actions Artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: wasm-v0.3.0-universal-release-apk
-          path: app/build/outputs/apk/release/wasm-v0.3.0-universal-release.apk
+          name: wasm-universal-release-apk
+          path: app/build/outputs/apk/release/wasm-universal-release.apk
           retention-days: 30
 
-      - name: Upload Standalone SHA256 Checksum (Artifact)
+      - name: Upload SHA256 Checksum (Actions Artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: wasm-v0.3.0-universal-release-sha256
-          path: app/build/outputs/apk/release/wasm-v0.3.0-universal-release.apk.sha256
+          name: wasm-universal-release-sha256
+          path: app/build/outputs/apk/release/wasm-universal-release.apk.sha256
           retention-days: 30
 
-      - name: Publish Direct-Download Standalone APK & SHA256 (No Zip)
+      - name: Publish Direct-Download Standalone APK to GitHub Releases (Pure APK, No Zip)
         if: github.ref == 'refs/heads/main'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="latest-apk"
-          echo "Publishing unzipped direct-download APK and checksum to GitHub Releases..."
-          gh release delete "$TAG" --yes --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
-          git push origin ":refs/tags/$TAG" 2>/dev/null || true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-apk
+          name: "Wasm Production Universal Release (Direct Download)"
+          draft: false
+          prerelease: false
+          make_latest: true
+          body: |
+            ### 📱 Direct Standalone APK Download (No Unzipping Required)
+            - **Production APK:** [wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk)
+            - **SHA-256 Checksum:** [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk.sha256)
 
-          gh release create "$TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Wasm Production Universal Release (Direct Download)" \
-            --notes "### 📱 Direct Standalone Download (No Unzipping Required)
-          - **Production APK:** [wasm-v0.3.0-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-v0.3.0-universal-release.apk)
-          - **SHA-256 Checksum:** [wasm-v0.3.0-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-v0.3.0-universal-release.apk.sha256)
-
-          Click the APK link directly to download and test without extracting any zip files!" \
-            --target "$GITHUB_SHA" \
-            app/build/outputs/apk/release/wasm-v0.3.0-universal-release.apk \
-            app/build/outputs/apk/release/wasm-v0.3.0-universal-release.apk.sha256
+            *Download and install directly — no zip extraction required!*
+          files: |
+            app/build/outputs/apk/release/wasm-universal-release.apk
+            app/build/outputs/apk/release/wasm-universal-release.apk.sha256
 
       - name: Upload Permanent Production Keystore Artifact
         if: env.HAS_GENERATED_KEYSTORE == 'true'
@@ -264,17 +260,18 @@ jobs:
       - name: Workflow Run Summary
         if: always()
         run: |
-          echo "# 📱 Standalone APK Direct Download" >> $GITHUB_STEP_SUMMARY
+          echo "# 📱 Pure APK Direct Download (No Unzipping Required)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> **[⬇️ Download wasm-v0.3.0-universal-release.apk (Unzipped APK)](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk)**" >> $GITHUB_STEP_SUMMARY
-          echo ">" >> $GITHUB_STEP_SUMMARY
-          echo "> 💡 **Note**: Always use the Direct Download link above. Do NOT click the 'Artifacts' table at the bottom of this page, because GitHub automatically compresses all Actions artifacts into zip files." >> $GITHUB_STEP_SUMMARY
+          echo "## ⬇️ [👉 Click Here to Download wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Build Details" >> $GITHUB_STEP_SUMMARY
-          echo "- **Architecture:** Universal (armeabi-v7a, arm64-v8a, x86, x86_64)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Binary:** \`wasm-v0.3.0-universal-release.apk\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **SHA-256 Checksum:** [wasm-v0.3.0-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk.sha256)" >> $GITHUB_STEP_SUMMARY
+          echo "> ⚠️ **IMPORTANT**: Always download using the direct link above or from the [Releases Portal](https://github.com/${{ github.repository }}/releases/tag/latest-apk)." >> $GITHUB_STEP_SUMMARY
+          echo "> **Do NOT download from the 'Artifacts' table at the bottom of this page.** GitHub automatically wraps all Actions artifacts in zip archives, whereas the Release link gives you the pure, uncompressed \`.apk\` binary directly." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Build & Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Direct Download URL:** [wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk)" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA-256 Checksum:** [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk.sha256)" >> $GITHUB_STEP_SUMMARY
           echo "- **GitHub Release Portal:** [Releases: latest-apk](https://github.com/${{ github.repository }}/releases/tag/latest-apk)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture:** Universal (armeabi-v7a, arm64-v8a, x86, x86_64)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ env.HAS_GENERATED_KEYSTORE }}" = "true" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 🔑 Permanent Keystore Stored" >> $GITHUB_STEP_SUMMARY
