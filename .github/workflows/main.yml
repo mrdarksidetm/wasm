@@ -264,13 +264,17 @@ jobs:
       - name: Workflow Run Summary
         if: always()
         run: |
-          echo "## 🚀 Wasm Production Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "# 📱 Standalone APK Direct Download" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **[⬇️ Download wasm-v0.3.0-universal-release.apk (Unzipped APK)](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk)**" >> $GITHUB_STEP_SUMMARY
+          echo ">" >> $GITHUB_STEP_SUMMARY
+          echo "> 💡 **Note**: Always use the Direct Download link above. Do NOT click the 'Artifacts' table at the bottom of this page, because GitHub automatically compresses all Actions artifacts into zip files." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Build Details" >> $GITHUB_STEP_SUMMARY
           echo "- **Architecture:** Universal (armeabi-v7a, arm64-v8a, x86, x86_64)" >> $GITHUB_STEP_SUMMARY
           echo "- **Binary:** \`wasm-v0.3.0-universal-release.apk\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Signing:** Production Keystore (Single permanent key forever)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Direct Download (No Zip):** [Download wasm-v0.3.0-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk)" >> $GITHUB_STEP_SUMMARY
           echo "- **SHA-256 Checksum:** [wasm-v0.3.0-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk.sha256)" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Release Portal:** [Releases: latest-apk](https://github.com/${{ github.repository }}/releases/tag/latest-apk)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ env.HAS_GENERATED_KEYSTORE }}" = "true" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 🔑 Permanent Keystore Stored" >> $GITHUB_STEP_SUMMARY

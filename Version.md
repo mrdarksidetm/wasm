@@ -514,3 +514,27 @@
 
 ### Status
 - 100% Production Ready. Standalone APK and checksum generated and available for immediate direct download.
+
+---
+
+## [0.5.8] - 2026-09-15 06:33:00
+### Icon System Redesign, WhatsApp Speech Bubble Visibility & SF Pro Typography Refinements
+- **Single Unified App Icon Architecture**:
+  - Removed deprecated layered XML icon assets: `ic_launcher_background.xml`, `ic_launcher_foreground.xml`, `ic_launcher_monochrome.xml`, and `ic_launcher_original.xml`.
+  - Removed `mipmap-anydpi-v26` directory containing adaptive-icon layer definitions.
+  - Disabled monochrome icon support. The application icon now strictly adheres to `Wasm - Original AppIcon.svg` as a single unified icon rendered across all mipmap density buckets (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) without foreground/background separation.
+- **Dedicated SF Pro Typography Constants**:
+  - Added explicit `FontFamily` constants in `Type.kt` for every individual SF Pro weight and italic style: `SfProBold`, `SfProItalic`, `SfProBoldItalic`, `SfProRegular`, `SfProMedium`, `SfProSemibold`, `SfProLight`, `SfProThin`, `SfProHeavy`, `SfProBlack`, and all respective italics.
+  - Applied `SfProBold`, `SfProItalic`, and `SfProBoldItalic` directly to WhatsApp formatted text spans and message block elements.
+- **WhatsApp Chat Bubble Visibility & Authentic Theming**:
+  - Configured authentic WhatsApp chat wallpaper background on `WhatsAppChatDetailScreen` (`#EFEAE2` in Light theme, `#0B141A` in Dark theme).
+  - Configured high-contrast authentic WhatsApp bubble colors:
+    - Outgoing bubbles (`isMe`): `#D9FDD3` (Light) / `#005C4B` (Dark).
+    - Incoming bubbles (`!isMe`): `#FFFFFF` (Light) / `#202C33` (Dark).
+  - Added `shadowElevation = 1.dp` and minimum bubble width constraint (`72.dp`) to ensure bubbles stand out clearly on all backgrounds.
+  - Set high-contrast typography colors: `#111B21` (Light) / `#E9EDEF` (Dark) across all parsed WhatsApp formatted elements.
+- **Direct Unzipped APK Download Instructions**:
+  - Updated GitHub Actions workflow summary to feature an unmissable direct APK download callout explaining that the standalone `.apk` is available via GitHub Releases, while GitHub Actions automatically zips artifacts downloaded through its web interface.
+
+### Status
+- 100% Implemented & Verified locally; ready for remote build and GitHub Actions verification.

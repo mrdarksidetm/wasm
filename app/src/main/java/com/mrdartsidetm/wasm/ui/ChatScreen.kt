@@ -44,6 +44,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mrdartsidetm.wasm.R
 import com.mrdartsidetm.wasm.data.MessageEntity
 import com.mrdartsidetm.wasm.data.WhatsAppConversationEntity
+import com.mrdartsidetm.wasm.ui.theme.SfProBold
+import com.mrdartsidetm.wasm.ui.theme.SfProBoldItalic
+import com.mrdartsidetm.wasm.ui.theme.SfProItalic
+import com.mrdartsidetm.wasm.ui.theme.SfProSemibold
+import com.mrdartsidetm.wasm.ui.theme.SfProRegular
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -646,9 +651,10 @@ private fun WhatsAppChatDetailScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     var isSearchActive by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
+    val isDark = isSystemInDarkTheme()
 
     Scaffold(
+        containerColor = if (isDark) Color(0xFF0B141A) else Color(0xFFEFEAE2),
         topBar = {
             if (isSearchActive) {
                 TopAppBar(
@@ -909,10 +915,23 @@ fun ExpressiveChatBubble(
 ) {
     val isDark = isSystemInDarkTheme()
 
+    // Authentic WhatsApp speech bubble colors
     val bubbleColor = if (isMe) {
-        if (isDark) Color(0xFF005C4B) else Color(0xFFE7FFDB)
+        if (isDark) Color(0xFF005C4B) else Color(0xFFD9FDD3)
     } else {
-        if (isDark) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLowest
+        if (isDark) Color(0xFF202C33) else Color(0xFFFFFFFF)
+    }
+
+    val contentTextColor = if (isDark) {
+        Color(0xFFE9EDEF)
+    } else {
+        Color(0xFF111B21)
+    }
+
+    val timestampColor = if (isDark) {
+        Color(0xFF8696A0)
+    } else {
+        Color(0xFF667781)
     }
 
     // Material 3 Expressive corner grouping for individual bubbles
@@ -945,14 +964,15 @@ fun ExpressiveChatBubble(
         Surface(
             shape = bubbleShape,
             color = bubbleColor,
+            shadowElevation = 1.dp,
             tonalElevation = 0.dp,
-            modifier = Modifier.widthIn(max = 320.dp)
+            modifier = Modifier.widthIn(min = 72.dp, max = 320.dp)
         ) {
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)) {
                 if (showSenderName) {
                     Text(
                         text = message.sender,
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = SfProBold),
                         fontWeight = FontWeight.Bold,
                         color = getWhatsAppAvatarColor(message.sender),
                         modifier = Modifier.padding(bottom = 2.dp)
@@ -977,7 +997,8 @@ fun ExpressiveChatBubble(
 
                 if (!isRedundantPlaceholder && message.content.isNotBlank()) {
                     WhatsAppFormattedMessage(
-                        content = message.content
+                        content = message.content,
+                        textColor = contentTextColor
                     )
                 }
 
@@ -991,7 +1012,7 @@ fun ExpressiveChatBubble(
                     Text(
                         text = timeOnly,
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        color = timestampColor
                     )
                     if (isMe) {
                         Icon(
@@ -1022,6 +1043,7 @@ fun ExpressiveChatBubble(
 @Composable
 fun WhatsAppFormattedMessage(
     content: String,
+    textColor: Color = MaterialTheme.colorScheme.onSurface,
     modifier: Modifier = Modifier
 ) {
     val isDark = isSystemInDarkTheme()
@@ -1037,11 +1059,13 @@ fun WhatsAppFormattedMessage(
     }
 
     if (!hasBlockElements) {
-        val annotated = remember(content, isDark) { parseWhatsAppInlineFormattedText(content, isDark) }
+        val annotated = remember(content, isDark, textColor) {
+            parseWhatsAppInlineFormattedText(content, isDark, textColor)
+        }
         Text(
             text = annotated,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = textColor,
             modifier = modifier
         )
     } else {
@@ -1071,9 +1095,12 @@ fun WhatsAppFormattedMessage(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = parseWhatsAppInlineFormattedText(quoteText, isDark),
-                                style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f)
+                                text = parseWhatsAppInlineFormattedText(quoteText, isDark, textColor),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontFamily = SfProItalic,
+                                    fontStyle = FontStyle.Italic
+                                ),
+                                color = textColor.copy(alpha = 0.88f)
                             )
                         }
                     }
@@ -1087,14 +1114,14 @@ fun WhatsAppFormattedMessage(
                         ) {
                             Text(
                                 text = "• ",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = SfProBold),
                                 fontWeight = FontWeight.Bold,
                                 color = WhatsAppAccentGreen
                             )
                             Text(
-                                text = parseWhatsAppInlineFormattedText(itemText, isDark),
+                                text = parseWhatsAppInlineFormattedText(itemText, isDark, textColor),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = textColor
                             )
                         }
                     }
@@ -1109,22 +1136,22 @@ fun WhatsAppFormattedMessage(
                         ) {
                             Text(
                                 text = numPrefix,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = SfProSemibold),
                                 fontWeight = FontWeight.SemiBold,
                                 color = WhatsAppAccentGreen
                             )
                             Text(
-                                text = parseWhatsAppInlineFormattedText(itemText, isDark),
+                                text = parseWhatsAppInlineFormattedText(itemText, isDark, textColor),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = textColor
                             )
                         }
                     }
                     else -> {
                         Text(
-                            text = parseWhatsAppInlineFormattedText(rawLine, isDark),
+                            text = parseWhatsAppInlineFormattedText(rawLine, isDark, textColor),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = textColor
                         )
                     }
                 }
@@ -1136,8 +1163,13 @@ fun WhatsAppFormattedMessage(
 /**
  * Parses inline formatting tags for WhatsApp messages recursively to support nesting:
  * e.g., *_bold and italic_*, *~bold strike~*, `code`, ```monospace```.
+ * Uses dedicated San Francisco Pro FontFamily definitions for authentic bold and italic typography.
  */
-fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedString {
+fun parseWhatsAppInlineFormattedText(
+    text: String,
+    isDark: Boolean,
+    textColor: Color = if (isDark) Color(0xFFE9EDEF) else Color(0xFF111B21)
+): AnnotatedString {
     val builder = AnnotatedString.Builder()
     val codeBackground = if (isDark) Color(0x33FFFFFF) else Color(0x1F000000)
 
@@ -1146,6 +1178,26 @@ fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedSt
         val italic: Boolean = false,
         val strike: Boolean = false
     )
+
+    fun getSpanStyle(active: ActiveFormat): SpanStyle {
+        val family = when {
+            active.bold && active.italic -> SfProBoldItalic
+            active.bold -> SfProBold
+            active.italic -> SfProItalic
+            else -> null
+        }
+        val weight = if (active.bold) FontWeight.Bold else null
+        val style = if (active.italic) FontStyle.Italic else null
+        val decoration = if (active.strike) TextDecoration.LineThrough else null
+
+        return SpanStyle(
+            fontFamily = family,
+            fontWeight = weight,
+            fontStyle = style,
+            textDecoration = decoration,
+            color = textColor
+        )
+    }
 
     fun parse(segment: String, active: ActiveFormat) {
         var i = 0
@@ -1160,7 +1212,8 @@ fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedSt
                     builder.addStyle(
                         SpanStyle(
                             fontFamily = FontFamily.Monospace,
-                            background = codeBackground
+                            background = codeBackground,
+                            color = textColor
                         ),
                         start,
                         builder.length
@@ -1180,7 +1233,8 @@ fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedSt
                     builder.addStyle(
                         SpanStyle(
                             fontFamily = FontFamily.Monospace,
-                            background = codeBackground
+                            background = codeBackground,
+                            color = textColor
                         ),
                         start,
                         builder.length
@@ -1199,7 +1253,7 @@ fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedSt
                     parse(inner, active.copy(bold = true))
                     val end = builder.length
                     if (end > start) {
-                        builder.addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
+                        builder.addStyle(getSpanStyle(active.copy(bold = true)), start, end)
                     }
                     i = closeIdx + 1
                     continue
@@ -1215,7 +1269,7 @@ fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedSt
                     parse(inner, active.copy(italic = true))
                     val end = builder.length
                     if (end > start) {
-                        builder.addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
+                        builder.addStyle(getSpanStyle(active.copy(italic = true)), start, end)
                     }
                     i = closeIdx + 1
                     continue
@@ -1231,7 +1285,7 @@ fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedSt
                     parse(inner, active.copy(strike = true))
                     val end = builder.length
                     if (end > start) {
-                        builder.addStyle(SpanStyle(textDecoration = TextDecoration.LineThrough), start, end)
+                        builder.addStyle(getSpanStyle(active.copy(strike = true)), start, end)
                     }
                     i = closeIdx + 1
                     continue
@@ -1239,7 +1293,11 @@ fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedSt
             }
 
             // Plain text character
+            val charStart = builder.length
             builder.append(segment[i])
+            if (active.bold || active.italic || active.strike) {
+                builder.addStyle(getSpanStyle(active), charStart, builder.length)
+            }
             i++
         }
     }

@@ -37,6 +37,26 @@ val SfProDisplayFontFamily = FontFamily(
     Font(R.font.sf_pro_display_black_italic, FontWeight.Black, FontStyle.Italic)
 )
 
+// Explicit individual FontFamily instances directly referencing specific OTF weights and styles
+val SfProBold = FontFamily(Font(R.font.sf_pro_display_bold, FontWeight.Bold))
+val SfProItalic = FontFamily(Font(R.font.sf_pro_display_regular_italic, FontWeight.Normal, FontStyle.Italic))
+val SfProBoldItalic = FontFamily(Font(R.font.sf_pro_display_bold_italic, FontWeight.Bold, FontStyle.Italic))
+val SfProRegular = FontFamily(Font(R.font.sf_pro_display_regular, FontWeight.Normal))
+val SfProMedium = FontFamily(Font(R.font.sf_pro_display_medium, FontWeight.Medium))
+val SfProMediumItalic = FontFamily(Font(R.font.sf_pro_display_medium_italic, FontWeight.Medium, FontStyle.Italic))
+val SfProSemibold = FontFamily(Font(R.font.sf_pro_display_semibold, FontWeight.SemiBold))
+val SfProSemiboldItalic = FontFamily(Font(R.font.sf_pro_display_semibold_italic, FontWeight.SemiBold, FontStyle.Italic))
+val SfProLight = FontFamily(Font(R.font.sf_pro_display_light, FontWeight.Light))
+val SfProLightItalic = FontFamily(Font(R.font.sf_pro_display_light_italic, FontWeight.Light, FontStyle.Italic))
+val SfProThin = FontFamily(Font(R.font.sf_pro_display_thin, FontWeight.Thin))
+val SfProThinItalic = FontFamily(Font(R.font.sf_pro_display_thin_italic, FontWeight.Thin, FontStyle.Italic))
+val SfProUltralight = FontFamily(Font(R.font.sf_pro_display_ultralight, FontWeight.ExtraLight))
+val SfProUltralightItalic = FontFamily(Font(R.font.sf_pro_display_ultralight_italic, FontWeight.ExtraLight, FontStyle.Italic))
+val SfProHeavy = FontFamily(Font(R.font.sf_pro_display_heavy, FontWeight.ExtraBold))
+val SfProHeavyItalic = FontFamily(Font(R.font.sf_pro_display_heavy_italic, FontWeight.ExtraBold, FontStyle.Italic))
+val SfProBlack = FontFamily(Font(R.font.sf_pro_display_black, FontWeight.Black))
+val SfProBlackItalic = FontFamily(Font(R.font.sf_pro_display_black_italic, FontWeight.Black, FontStyle.Italic))
+
 /**
  * Creates a composite FontFamily where San Francisco Pro is the primary font
  * and the bundled iOS emoji font (iOS 26.4 CBDT/CBLC) is configured as the
