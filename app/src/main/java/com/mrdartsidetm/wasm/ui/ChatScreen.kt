@@ -29,8 +29,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -971,10 +976,8 @@ fun ExpressiveChatBubble(
                          message.content.equals("<attached: ${message.mediaName}>", ignoreCase = true))
 
                 if (!isRedundantPlaceholder && message.content.isNotBlank()) {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                    WhatsAppFormattedMessage(
+                        content = message.content
                     )
                 }
 
@@ -1002,6 +1005,259 @@ fun ExpressiveChatBubble(
             }
         }
     }
+}
+
+/**
+ * Renders WhatsApp-style rich formatted messages:
+ * - Bold: *text*
+ * - Italic: _text_
+ * - Strikethrough: ~text~
+ * - Monospace: ```text```
+ * - Inline code: `text`
+ * - Grouped / nested combinations: e.g. *_bold and italic_*
+ * - Quote block: > quote text (renders with vertical accent stripe)
+ * - Bulleted list: * item or - item (renders with bullet points)
+ * - Numbered list: 1. item (renders with aligned numbers)
+ */
+@Composable
+fun WhatsAppFormattedMessage(
+    content: String,
+    modifier: Modifier = Modifier
+) {
+    val isDark = isSystemInDarkTheme()
+    val lines = remember(content) { content.lines() }
+
+    val hasBlockElements = remember(lines) {
+        lines.any { line ->
+            line.startsWith("> ") ||
+            line.startsWith("* ") ||
+            line.startsWith("- ") ||
+            line.matches(Regex("""^\d+\.\s.*"""))
+        }
+    }
+
+    if (!hasBlockElements) {
+        val annotated = remember(content, isDark) { parseWhatsAppInlineFormattedText(content, isDark) }
+        Text(
+            text = annotated,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = modifier
+        )
+    } else {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            lines.forEach { rawLine ->
+                when {
+                    rawLine.startsWith("> ") -> {
+                        val quoteText = rawLine.removePrefix("> ")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .padding(vertical = 2.dp)
+                                    .height(18.dp)
+                                    .background(
+                                        color = WhatsAppAccentGreen,
+                                        shape = RoundedCornerShape(2.dp)
+                                    )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = parseWhatsAppInlineFormattedText(quoteText, isDark),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f)
+                            )
+                        }
+                    }
+                    rawLine.startsWith("* ") || rawLine.startsWith("- ") -> {
+                        val itemText = rawLine.substring(2)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 1.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                text = "• ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = WhatsAppAccentGreen
+                            )
+                            Text(
+                                text = parseWhatsAppInlineFormattedText(itemText, isDark),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    rawLine.matches(Regex("""^\d+\.\s.*""")) -> {
+                        val numPrefix = rawLine.substringBefore(". ") + ". "
+                        val itemText = rawLine.substringAfter(". ")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 1.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                text = numPrefix,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = WhatsAppAccentGreen
+                            )
+                            Text(
+                                text = parseWhatsAppInlineFormattedText(itemText, isDark),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    else -> {
+                        Text(
+                            text = parseWhatsAppInlineFormattedText(rawLine, isDark),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Parses inline formatting tags for WhatsApp messages recursively to support nesting:
+ * e.g., *_bold and italic_*, *~bold strike~*, `code`, ```monospace```.
+ */
+fun parseWhatsAppInlineFormattedText(text: String, isDark: Boolean): AnnotatedString {
+    val builder = AnnotatedString.Builder()
+    val codeBackground = if (isDark) Color(0x33FFFFFF) else Color(0x1F000000)
+
+    data class ActiveFormat(
+        val bold: Boolean = false,
+        val italic: Boolean = false,
+        val strike: Boolean = false
+    )
+
+    fun parse(segment: String, active: ActiveFormat) {
+        var i = 0
+        while (i < segment.length) {
+            // Triple backtick monospace: ```text```
+            if (segment.startsWith("```", i)) {
+                val closeIdx = segment.indexOf("```", i + 3)
+                if (closeIdx != -1) {
+                    val inner = segment.substring(i + 3, closeIdx)
+                    val start = builder.length
+                    builder.append(inner)
+                    builder.addStyle(
+                        SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            background = codeBackground
+                        ),
+                        start,
+                        builder.length
+                    )
+                    i = closeIdx + 3
+                    continue
+                }
+            }
+
+            // Single backtick inline code: `text`
+            if (segment[i] == '`') {
+                val closeIdx = segment.indexOf('`', i + 1)
+                if (closeIdx != -1) {
+                    val inner = segment.substring(i + 1, closeIdx)
+                    val start = builder.length
+                    builder.append(inner)
+                    builder.addStyle(
+                        SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            background = codeBackground
+                        ),
+                        start,
+                        builder.length
+                    )
+                    i = closeIdx + 1
+                    continue
+                }
+            }
+
+            // Bold: *text*
+            if (segment[i] == '*') {
+                val closeIdx = findClosingDelimiter(segment, i, '*')
+                if (closeIdx != -1) {
+                    val inner = segment.substring(i + 1, closeIdx)
+                    val start = builder.length
+                    parse(inner, active.copy(bold = true))
+                    val end = builder.length
+                    if (end > start) {
+                        builder.addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
+                    }
+                    i = closeIdx + 1
+                    continue
+                }
+            }
+
+            // Italic: _text_
+            if (segment[i] == '_') {
+                val closeIdx = findClosingDelimiter(segment, i, '_')
+                if (closeIdx != -1) {
+                    val inner = segment.substring(i + 1, closeIdx)
+                    val start = builder.length
+                    parse(inner, active.copy(italic = true))
+                    val end = builder.length
+                    if (end > start) {
+                        builder.addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
+                    }
+                    i = closeIdx + 1
+                    continue
+                }
+            }
+
+            // Strikethrough: ~text~
+            if (segment[i] == '~') {
+                val closeIdx = findClosingDelimiter(segment, i, '~')
+                if (closeIdx != -1) {
+                    val inner = segment.substring(i + 1, closeIdx)
+                    val start = builder.length
+                    parse(inner, active.copy(strike = true))
+                    val end = builder.length
+                    if (end > start) {
+                        builder.addStyle(SpanStyle(textDecoration = TextDecoration.LineThrough), start, end)
+                    }
+                    i = closeIdx + 1
+                    continue
+                }
+            }
+
+            // Plain text character
+            builder.append(segment[i])
+            i++
+        }
+    }
+
+    parse(text, ActiveFormat())
+    return builder.toAnnotatedString()
+}
+
+private fun findClosingDelimiter(text: String, startIndex: Int, delimiter: Char): Int {
+    if (startIndex + 1 >= text.length || text[startIndex + 1].isWhitespace()) return -1
+    for (j in (startIndex + 1) until text.length) {
+        if (text[j] == delimiter && j > startIndex + 1) {
+            if (!text[j - 1].isWhitespace()) {
+                return j
+            }
+        }
+    }
+    return -1
 }
 
 /**

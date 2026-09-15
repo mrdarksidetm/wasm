@@ -9,11 +9,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,8 +23,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -194,10 +187,8 @@ class MainActivity : ComponentActivity() {
                                 selected = selectedTab == 0,
                                 onClick = { selectedTab = 0 },
                                 icon = {
-                                    AnimatedNavIcon(
-                                        selected = selectedTab == 0,
-                                        selectedIcon = Icons.Filled.Home,
-                                        unselectedIcon = Icons.Outlined.Home,
+                                    Icon(
+                                        imageVector = if (selectedTab == 0) Icons.Filled.Home else Icons.Outlined.Home,
                                         contentDescription = "Home"
                                     )
                                 },
@@ -214,10 +205,8 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 icon = {
-                                    AnimatedNavIcon(
-                                        selected = selectedTab == 1,
-                                        selectedIcon = Icons.Filled.Forum,
-                                        unselectedIcon = Icons.Outlined.Forum,
+                                    Icon(
+                                        imageVector = if (selectedTab == 1) Icons.Filled.Forum else Icons.Outlined.Forum,
                                         contentDescription = "Messages"
                                     )
                                 },
@@ -227,10 +216,8 @@ class MainActivity : ComponentActivity() {
                                 selected = selectedTab == 2,
                                 onClick = { selectedTab = 2 },
                                 icon = {
-                                    AnimatedNavIcon(
-                                        selected = selectedTab == 2,
-                                        selectedIcon = Icons.Filled.Settings,
-                                        unselectedIcon = Icons.Outlined.Settings,
+                                    Icon(
+                                        imageVector = if (selectedTab == 2) Icons.Filled.Settings else Icons.Outlined.Settings,
                                         contentDescription = "Settings"
                                     )
                                 },
@@ -354,48 +341,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/**
- * Material 3 Expressive animated navigation bar icon.
- * Applies bouncy spring scaling, subtle rotation, and smooth morphing crossfade between outlined and filled states.
- */
-@Composable
-private fun AnimatedNavIcon(
-    selected: Boolean,
-    selectedIcon: ImageVector,
-    unselectedIcon: ImageVector,
-    contentDescription: String
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1.2f else 1.0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        label = "NavIconScale"
-    )
-
-    val rotation by animateFloatAsState(
-        targetValue = if (selected) 0f else -6f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        label = "NavIconRotation"
-    )
-
-    Crossfade(
-        targetState = selected,
-        animationSpec = tween(durationMillis = 200),
-        label = "NavIconMorph",
-        modifier = Modifier.graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-            rotationZ = rotation
-        }
-    ) { isSelected ->
-        Icon(
-            imageVector = if (isSelected) selectedIcon else unselectedIcon,
-            contentDescription = contentDescription
-        )
-    }
-}

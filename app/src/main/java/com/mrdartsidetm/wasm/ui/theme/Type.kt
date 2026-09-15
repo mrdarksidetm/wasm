@@ -45,8 +45,37 @@ val SfProDisplayFontFamily = FontFamily(
 fun getAppFontFamily(context: Context): FontFamily {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         try {
-            val primaryFont = android.graphics.fonts.Font.Builder(context.resources, R.font.sf_pro_display_regular).build()
-            val primaryFamily = android.graphics.fonts.FontFamily.Builder(primaryFont).build()
+            val fontResList = intArrayOf(
+                R.font.sf_pro_display_thin,
+                R.font.sf_pro_display_thin_italic,
+                R.font.sf_pro_display_ultralight,
+                R.font.sf_pro_display_ultralight_italic,
+                R.font.sf_pro_display_light,
+                R.font.sf_pro_display_light_italic,
+                R.font.sf_pro_display_regular,
+                R.font.sf_pro_display_regular_italic,
+                R.font.sf_pro_display_medium,
+                R.font.sf_pro_display_medium_italic,
+                R.font.sf_pro_display_semibold,
+                R.font.sf_pro_display_semibold_italic,
+                R.font.sf_pro_display_bold,
+                R.font.sf_pro_display_bold_italic,
+                R.font.sf_pro_display_heavy,
+                R.font.sf_pro_display_heavy_italic,
+                R.font.sf_pro_display_black,
+                R.font.sf_pro_display_black_italic
+            )
+
+            val firstFont = android.graphics.fonts.Font.Builder(context.resources, fontResList[0]).build()
+            val familyBuilder = android.graphics.fonts.FontFamily.Builder(firstFont)
+            for (i in 1 until fontResList.size) {
+                try {
+                    familyBuilder.addFont(android.graphics.fonts.Font.Builder(context.resources, fontResList[i]).build())
+                } catch (fontEx: Throwable) {
+                    // Ignore single font builder errors if any
+                }
+            }
+            val primaryFamily = familyBuilder.build()
 
             // Custom fallback with bundled Apple color emoji font from assets
             val emojiFont = android.graphics.fonts.Font.Builder(context.assets, "fonts/ios_emoji.ttf").build()

@@ -464,3 +464,32 @@
 
 ### Status
 - 100% Universal Production Release APK generated, signed, verified, and published to GitHub Releases for direct download.
+
+
+---
+
+## [0.5.6] - 2026-09-15 05:53:00
+### Vector & Multi-Density Raster Icon Regeneration, All 18 SF Pro Weights, WhatsApp Rich Formatting & Nav Icon Cleanup
+- **Vector Drawables & Multi-Density Raster PNG Regeneration**:
+  - Updated `ic_launcher_original.xml`, `ic_launcher_foreground.xml`, `ic_launcher_background.xml`, and `ic_launcher_monochrome.xml` with the exact updated paths, yellow/neon star `#E5EB2B`, inner star gradient, and sparkle stars from `Wasm - Original AppIcon.svg`.
+  - Regenerated multi-density raster PNGs directly from the updated SVG across all density buckets: `mipmap-mdpi` (48x48), `mipmap-hdpi` (72x72), `mipmap-xhdpi` (96x96), `mipmap-xxhdpi` (144x144), `mipmap-xxxhdpi` (192x192) for both square `ic_launcher.png` and circular `ic_launcher_round.png`.
+  - Regenerated high-resolution 512x512 `app_icon.png` in `res/drawable/` and `assests/app-icons/Wasm - Original AppIcon.png`.
+- **Full Spectrum SF Pro Font Weights & Styles (All 18 Weights)**:
+  - Updated `getAppFontFamily` in `ui.theme.Type.kt` to load and register all 18 font weights and italics (thin, ultralight, light, regular, medium, semibold, bold, heavy, black, and all italic variants) into `android.graphics.fonts.FontFamily.Builder` alongside the native iOS emoji fallback.
+  - Aligned Material 3 Expressive typography with distinct weights: displayLarge (Light), headlineLarge/Medium (Bold), titleLarge (Bold), titleMedium/Small (SemiBold/Medium), body (Normal), and label (SemiBold/Medium).
+- **WhatsApp Rich Text Formatting Support**:
+  - Implemented `WhatsAppFormattedMessage` and recursive inline token parser `parseWhatsAppInlineFormattedText` in `ui/ChatScreen.kt`:
+    - **Bold**: `*text*`
+    - **Italic**: `_text_`
+    - **Strikethrough**: `~text~`
+    - **Monospace**: ``` ```text``` ```
+    - **Inline code**: `` `text` ``
+    - **Nested & Grouped Formatting**: Handles simultaneous nested combinations such as `*_bold and italic_*`, `*~bold strike~*`, etc.
+    - **Quote blocks**: Lines starting with `> ` render with WhatsApp-style vertical green accent bar and indented italic styling.
+    - **Bulleted lists**: Lines starting with `* ` or `- ` render with bullet points (`• `).
+    - **Numbered lists**: Lines starting with `1. `, `2. `, etc. render with aligned numbers.
+- **Navigation Bar Icon Animation Removal**:
+  - Removed `AnimatedNavIcon` bouncy spring scaling and tilt animations from `MainActivity.kt`, restoring clean, lightweight, native Material 3 navigation bar icons.
+
+### Status
+- 100% Implemented; code syntax and brace balance verified; ready for remote GitHub Actions verification.
