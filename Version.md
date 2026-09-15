@@ -493,3 +493,24 @@
 
 ### Status
 - 100% Implemented; code syntax and brace balance verified; ready for remote GitHub Actions verification.
+
+---
+
+## [0.5.7] - 2026-09-15 05:59:00
+### Remote Production Build & Verification (GitHub Actions Run #34913012142)
+- **CI/CD Remote Verification**:
+  - **Run ID**: [34913012142](https://github.com/mrdarksidetm/wasm/actions/runs/34913012142)
+  - **Commit**: `fee3481` ("feat: regenerate raster/vector icons from updated SVG, activate all SF Pro weights, add WhatsApp rich formatting & revert nav icon animations")
+  - **Job 1 (Analysis & Unit Tests)**: Completed with `success` (Android Lint and Unit Tests passed).
+  - **Job 2 (Build Universal Production APK)**: Completed with `success` (All release packaging, production signing, and alignment verification passed).
+- **Direct Standalone APK & SHA256 Distribution (No Zip Extraction Needed)**:
+  - **Standalone Universal Release APK**: [wasm-v0.3.0-universal-release.apk](https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk) (43.82 MB)
+  - **Standalone SHA-256 Checksum**: [wasm-v0.3.0-universal-release.apk.sha256](https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-v0.3.0-universal-release.apk.sha256)
+  - **Release Portal**: [GitHub Releases - latest-apk](https://github.com/mrdarksidetm/wasm/releases/tag/latest-apk)
+- **Production APK Quality & Verification**:
+  - Validated with v1/v2/v3 signatures against the permanent production release keystore.
+  - Confirmed 4-byte alignment with `zipalign`.
+  - Standalone raw `.apk` and `.sha256` files directly accessible for frictionless installation and testing without zip unarchiving.
+
+### Status
+- 100% Production Ready. Standalone APK and checksum generated and available for immediate direct download.
