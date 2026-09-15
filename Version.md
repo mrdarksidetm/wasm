@@ -608,3 +608,14 @@
 
 ### Status
 - 100% Implemented & Verified; committing and pushing to GitHub for automated build and APK verification.
+
+---
+
+## [0.6.2] - 2026-09-15 18:36:00
+### Fix Instagram Message Count Mapping & WhatsApp Flow Initial Value in HomeScreen
+- **Compilation Fix**:
+  - Aligned Instagram message count calculation in `HomeScreen.kt` to use `InstagramConversationEntity.messageCount` (resolving unresolved reference to `totalMessages`).
+  - Added explicit `initialValue = 0` to `whatsappViewModel.totalMessageCount.collectAsStateWithLifecycle(initialValue = 0)` ensuring robust Kotlin type inference for non-state Flows.
+
+### Status
+- 100% Resolved; committing and pushing to GitHub for automated build and APK verification.

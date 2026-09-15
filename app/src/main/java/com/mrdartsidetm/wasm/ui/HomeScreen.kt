@@ -61,10 +61,10 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     // Collect messages and archive stats
-    val waTotalMessages by whatsappViewModel.totalMessageCount.collectAsStateWithLifecycle()
+    val waTotalMessages by whatsappViewModel.totalMessageCount.collectAsStateWithLifecycle(initialValue = 0)
     val igConversations by instagramViewModel.conversations.collectAsStateWithLifecycle()
-    val igTotalMessages = remember(igConversations) { igConversations.sumOf { it.totalMessages } }
-    val totalImportedMessages = waTotalMessages + igTotalMessages
+    val igTotalMessages: Int = remember(igConversations) { igConversations.sumOf { it.messageCount } }
+    val totalImportedMessages: Int = waTotalMessages + igTotalMessages
 
     // Personalized user profile preferences
     val savedPhotoPath by prefs.profileImagePath.collectAsStateWithLifecycle(initialValue = null)
