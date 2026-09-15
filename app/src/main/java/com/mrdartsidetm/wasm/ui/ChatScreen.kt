@@ -651,6 +651,7 @@ private fun WhatsAppChatDetailScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     var isSearchActive by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
     val isDark = isSystemInDarkTheme()
 
     Scaffold(

@@ -538,3 +538,14 @@
 
 ### Status
 - 100% Implemented & Verified locally; ready for remote build and GitHub Actions verification.
+
+---
+
+## [0.5.9] - 2026-09-15 06:38:00
+### Surgical Fix for WhatsApp Chat Detail Screen State
+- **Compilation Fix**:
+  - Restored `val listState = rememberLazyListState()` in `WhatsAppChatDetailScreen` after containerColor scaffold initialization.
+  - Verified Kotlin symbol resolution for `LazyColumn` scrolling state.
+
+### Status
+- 100% Resolved; pushing to GitHub for remote verification.
