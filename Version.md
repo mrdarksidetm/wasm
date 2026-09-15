@@ -619,3 +619,14 @@
 
 ### Status
 - 100% Resolved; committing and pushing to GitHub for automated build and APK verification.
+
+---
+
+## [0.6.3] - 2026-09-15 18:46:00
+### Restore Authenticated GitHub CLI Release Publishing for Universal APK
+- **CI/CD Fix**:
+  - Replaced third-party GitHub Release action with native authenticated `gh release create` utilizing `GITHUB_TOKEN`.
+  - Maintained standardized unzipped direct-download output name `wasm-universal-release.apk` with matching SHA-256 verification hash.
+
+### Status
+- 100% Resolved; committing and pushing to GitHub for automated build and APK verification.

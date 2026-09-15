@@ -232,21 +232,24 @@ jobs:
 
       - name: Publish Direct-Download Standalone APK to GitHub Releases (Pure APK, No Zip)
         if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest-apk
-          name: "Wasm Production Universal Release (Direct Download)"
-          draft: false
-          prerelease: false
-          make_latest: true
-          body: |
-            ### 📱 Direct Standalone APK Download (No Unzipping Required)
-            - **Production APK:** [wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk)
-            - **SHA-256 Checksum:** [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk.sha256)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="latest-apk"
+          echo "Publishing unzipped direct-download APK and checksum to GitHub Releases..."
+          gh release delete "$TAG" --yes --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
 
-            *Download and install directly — no zip extraction required!*
-          files: |
-            app/build/outputs/apk/release/wasm-universal-release.apk
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Wasm Production Universal Release (Direct Download)" \
+            --notes "### 📱 Direct Standalone Download (No Unzipping Required)
+          - **Production APK:** [wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-universal-release.apk)
+          - **SHA-256 Checksum:** [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-universal-release.apk.sha256)
+
+          Click the APK link directly to download and test without extracting any zip files!" \
+            --target "$GITHUB_SHA" \
+            app/build/outputs/apk/release/wasm-universal-release.apk \
             app/build/outputs/apk/release/wasm-universal-release.apk.sha256
 
       - name: Upload Permanent Production Keystore Artifact
