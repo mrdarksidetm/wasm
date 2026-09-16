@@ -1,11 +1,13 @@
 package com.mrdartsidetm.wasm.ui
 
 import android.graphics.BitmapFactory
+import android.os.Build
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,9 +25,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -194,33 +199,104 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Rectangle Animated Card with Frosted Glass Effect & Primary/Tertiary Ambient Background
-            val frostedGlassBrush = Brush.linearGradient(
-                colors = listOf(
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
-                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0.70f)
-                )
-            )
+            // Rectangle Animated Card with Genuine Full-Body Frosted Glass Effect & Subtle Ambient Primary/Tertiary Glow
+            val primaryColor = MaterialTheme.colorScheme.primary
+            val tertiaryColor = MaterialTheme.colorScheme.tertiary
+            val surfaceColor = MaterialTheme.colorScheme.surface
 
-            val frostedBorderBrush = Brush.linearGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = 0.40f),
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.30f),
-                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f)
-                )
-            )
-
-            Card(
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = BorderStroke(1.dp, frostedBorderBrush),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(28.dp))
-                    .background(frostedGlassBrush)
             ) {
+                // Layer 1: Ambient Background Color Glows (Subtle Primary & Tertiary diffused in background)
+                Canvas(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .then(
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                Modifier.graphicsLayer {
+                                    renderEffect = android.graphics.RenderEffect
+                                        .createBlurEffect(70f, 70f, android.graphics.Shader.TileMode.CLAMP)
+                                        .asComposeRenderEffect()
+                                }
+                            } else {
+                                Modifier
+                            }
+                        )
+                ) {
+                    val w = size.width
+                    val h = size.height
+                    // Soft primary glow pool at top-left
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                primaryColor.copy(alpha = 0.38f),
+                                primaryColor.copy(alpha = 0.15f),
+                                Color.Transparent
+                            ),
+                            center = Offset(w * 0.15f, h * 0.15f),
+                            radius = w * 0.55f
+                        )
+                    )
+                    // Soft tertiary glow pool at bottom-right
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                tertiaryColor.copy(alpha = 0.32f),
+                                tertiaryColor.copy(alpha = 0.12f),
+                                Color.Transparent
+                            ),
+                            center = Offset(w * 0.85f, h * 0.85f),
+                            radius = w * 0.60f
+                        )
+                    )
+                }
+
+                // Layer 2: Frosted Glass Panel (Translucent diffused surface with specular sheen)
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    surfaceColor.copy(alpha = 0.50f),
+                                    surfaceColor.copy(alpha = 0.68f)
+                                )
+                            )
+                        )
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.14f),
+                                    Color.Transparent,
+                                    Color.White.copy(alpha = 0.05f)
+                                ),
+                                start = Offset.Zero,
+                                end = Offset.Infinite
+                            )
+                        )
+                )
+
+                // Hairline frosted border rim (not thick inner borders)
+                Surface(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(28.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.45f),
+                                primaryColor.copy(alpha = 0.20f),
+                                tertiaryColor.copy(alpha = 0.15f),
+                                Color.White.copy(alpha = 0.10f)
+                            )
+                        )
+                    ),
+                    modifier = Modifier.matchParentSize()
+                ) {}
+
+                // Layer 3: Foreground Content Layer (Animations, Numbers & Typography sharp on top of glass)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -233,14 +309,14 @@ fun HomeScreen(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            color = primaryColor.copy(alpha = 0.15f),
                             modifier = Modifier.size(38.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.ChatBubbleOutline,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = primaryColor,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }

@@ -630,3 +630,33 @@
 
 ### Status
 - 100% Resolved; committing and pushing to GitHub for automated build and APK verification.
+
+---
+
+## [0.6.4] - 2026-09-16 08:42:00
+### Authentic Full-Body Frosted Glass, Pure Square App Icon Architecture & Robust Unzipped APK Delivery
+- **Full-Body Frosted Glass Animated Card (`HomeScreen.kt`)**:
+  - Upgraded the card architecture from a simple border/gradient to an authentic multi-layer glassmorphism system.
+  - Layer 1 (Ambient Background Glow): Diffused radial gradient pools of `primary` (alpha 0.38f) at top-left and `tertiary` (alpha 0.32f) at bottom-right, backed by hardware-accelerated blur (`RenderEffect.createBlurEffect(70f, 70f)`) on Android 12+ (API 31+).
+  - Layer 2 (Frosted Glass Panel): Translucent surface wash (`surfaceColor` alpha 0.50f to 0.68f) combined with a delicate diagonal specular sheen (`Color.White` alpha 0.14f) and a subtle hairline rim (1.dp) with no thick inner borders.
+  - Layer 3 (Crisp Foreground Content): Animated 0-to-total message count (`animateIntAsState` with `FastOutSlowInEasing`), archive header, and platform badge pills rendered on top of the glass pane.
+- **Pristine Blank Canvas & Personalization Flow**:
+  - Implemented clean canvas layout with system window insets (`Modifier.statusBarsPadding()`).
+  - Dynamic time-based greeting heading: "Good Morning" (04:00-11:59), "Good Afternoon" (12:00-16:59), and "Good Evening" (17:00-03:59).
+  - Top horizon profile avatar triggering a top-to-bottom slide and fade transition to `PersonalizeScreen.kt`.
+  - Floating circular back button in distinct container color (`secondaryContainer`, 6.dp shadow elevation).
+  - Centered "Let's Personalize" headline and large circular profile photo avatar (140.dp) paired with an overlapping circular edit badge (42.dp) containing a pencil icon.
+  - Integrated modern Android Photo Picker flow (`ActivityResultContracts.PickVisualMedia`) with zero runtime permissions.
+  - Name input field persisted to DataStore preferences and dynamic tertiary-colored Settings button.
+- **Pure Square App Icon Architecture**:
+  - Identified root cause of circular icon rendering: OEM launcher masking of legacy icons and presence of `android:roundIcon` in `AndroidManifest.xml` alongside `ic_launcher_round.png`.
+  - Removed `android:roundIcon` attribute completely from `AndroidManifest.xml`.
+  - Deleted all `ic_launcher_round.png` assets across all mipmap density buckets.
+  - Generated 100% solid, edge-to-edge square raster PNGs directly from `Wasm - Original AppIcon.svg` using `resvg` across all density buckets (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`), `res/drawable/app_icon.png` (512x512), and `assests/app-icons/Wasm - Original AppIcon.png` (512x512).
+  - Configured adaptive icon XML in `res/mipmap-anydpi-v26/ic_launcher.xml` referencing vector background (`ic_launcher_background.xml`) and vector foreground (`ic_launcher_foreground.xml`) to prevent launchers from placing icons into white saucers.
+- **Robust Unzipped Standalone APK Release**:
+  - Hardened GitHub Actions release publishing with fallback `--clobber` asset upload in `.github/workflows/main.yml`.
+  - Added comprehensive `README.md` with direct APK download badges and clear explanations of GitHub Actions artifact compression vs. direct Release downloads.
+
+### Status
+- 100% Implemented & Verified; committing and pushing to GitHub for automated CI build and APK release verification.
