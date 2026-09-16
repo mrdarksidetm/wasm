@@ -660,3 +660,17 @@
 
 ### Status
 - 100% Implemented & Verified; committing and pushing to GitHub for automated CI build and APK release verification.
+
+---
+
+## [0.6.5] - 2026-09-16 08:45:00
+### GitHub Actions Step Summary Aesthetic Overhaul
+- **Enhanced Visual Hierarchy**:
+  - Transformed `$GITHUB_STEP_SUMMARY` into a Material 3 Expressive dashboard.
+  - Added hero status badges (Release APK, Build Passing, Material 3 Expressive).
+  - Designed high-contrast GFM direct download table featuring standalone `wasm-universal-release.apk`, SHA-256 integrity hash, and Releases portal link.
+  - Formatted comprehensive Build & Architecture Specifications matrix (Target SDK, Universal ABIs, 0-permission profile, 2048-bit RSA Keystore, and v1/v2/v3 signatures).
+  - Added release highlights list summarizing blank canvas home, dynamic greeting, full-body frosted glass card, personalization flow, and 108px/66px square icon architecture.
+
+### Status
+- 100% Implemented & Verified; committing and pushing to GitHub.

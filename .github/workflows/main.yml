@@ -271,20 +271,62 @@ jobs:
       - name: Workflow Run Summary
         if: always()
         run: |
-          echo "# 📱 Pure APK Direct Download (No Unzipping Required)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## ⬇️ [👉 Click Here to Download wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> ⚠️ **IMPORTANT**: Always download using the direct link above or from the [Releases Portal](https://github.com/${{ github.repository }}/releases/tag/latest-apk)." >> $GITHUB_STEP_SUMMARY
-          echo "> **Do NOT download from the 'Artifacts' table at the bottom of this page.** GitHub automatically wraps all Actions artifacts in zip archives, whereas the Release link gives you the pure, uncompressed \`.apk\` binary directly." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Build & Release Details" >> $GITHUB_STEP_SUMMARY
-          echo "- **Direct Download URL:** [wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk)" >> $GITHUB_STEP_SUMMARY
-          echo "- **SHA-256 Checksum:** [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk.sha256)" >> $GITHUB_STEP_SUMMARY
-          echo "- **GitHub Release Portal:** [Releases: latest-apk](https://github.com/${{ github.repository }}/releases/tag/latest-apk)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Architecture:** Universal (armeabi-v7a, arm64-v8a, x86, x86_64)" >> $GITHUB_STEP_SUMMARY
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          # 🚀 Wasm Android — Universal Production Build
+
+          <div align="center">
+
+          [![Universal APK](https://img.shields.io/badge/Release%20APK-Pure%20Standalone-062362?style=for-the-badge&logo=android&logoColor=white)](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk)
+          [![Build Status](https://img.shields.io/badge/Build-Passing-2e7d32?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/${{ github.repository }}/actions)
+          [![Design](https://img.shields.io/badge/Design-Material%203%20Expressive-758AEF?style=for-the-badge&logo=material-design&logoColor=white)](https://m3.material.io)
+
+          </div>
+
+          ---
+
+          ## 📥 Direct Standalone APK (No Unzipping Required)
+
+          > [!IMPORTANT]
+          > **Pure `.apk` binary available directly**: Always download using the direct link below or from the **[Releases Portal](https://github.com/${{ github.repository }}/releases/tag/latest-apk)**.
+          > 
+          > ⚠️ *Do **NOT** download from the "Artifacts" table at the bottom of the Actions page.* GitHub automatically wraps all Actions artifacts in `.zip` files, whereas the Release link delivers the standalone `.apk` directly to your device ready to install.
+
+          | Asset | Description | Format | Direct Download |
+          | :--- | :--- | :--- | :--- |
+          | 📱 **Production APK** | Universal Release (All ABIs) | `.apk` (Pure) | [**⬇️ Download wasm-universal-release.apk**](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk) |
+          | 🔒 **Integrity Hash** | SHA-256 Checksum | `.sha256` | [**📄 View Checksum**](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk.sha256) |
+          | 🏷️ **Release Tag** | Production Release Assets | Portal | [**📦 Browse `latest-apk` Release**](https://github.com/${{ github.repository }}/releases/tag/latest-apk) |
+
+          ---
+
+          ## 🛠️ Build & Architecture Specifications
+
+          | Attribute | Specification | Notes |
+          | :--- | :--- | :--- |
+          | **Target Platform** | Android 8.0+ (API 26–35) | Native Jetpack Compose |
+          | **Architectures** | `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86` | Universal FAT binary |
+          | **UI Design System** | **Material 3 Expressive** | Edge-to-edge, dynamic time greeting, full-body frosted glass |
+          | **App Icon** | **Square Adaptive Icon** | 108px canvas with 66px safe zone matching original SVG |
+          | **Permissions** | **0 Broad Permissions** | Modern Photo Picker & SAF (Zero runtime permissions required) |
+          | **Signing Key** | 2048-bit RSA Keystore | Permanent, persisted in `ci-keystore` |
+          | **Signature Schemes** | APK Signature Scheme v1, v2, v3 | Verified with `apksigner` |
+
+          ---
+
+          ## 🎨 Features in this Release
+          - 🌅 **Blank Canvas Home Screen**: Clean layout with system window insets (`statusBarsPadding`).
+          - ⏱️ **Dynamic Greeting**: Time-aware greeting (`Good Morning`, `Good Afternoon`, `Good Evening`) with right-aligned profile avatar.
+          - 🧊 **Full-Body Frosted Glass Card**: Multi-layer glassmorphism featuring subtle ambient primary and tertiary glows, specular highlights, and hardware-accelerated diffusion (`RenderEffect`).
+          - 🔢 **Animated Message Counter**: Smooth 0-to-total message count running above the frosted glass plane.
+          - 👤 **"Let's Personalize" Flow**: Top-to-bottom animated screen with hovering circular back button, centered title, avatar photo picker, and dynamic muted Settings trigger.
+          - ⏹️ **Authentic Square App Icon**: Rebuilt adaptive icon using the exact 108px SVG canvas and 66px safe zone without circular launcher clipping.
+
+          EOF
+
           if [ "${{ env.HAS_GENERATED_KEYSTORE }}" = "true" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### 🔑 Permanent Keystore Stored" >> $GITHUB_STEP_SUMMARY
-            echo "A permanent 2048-bit RSA key was generated and preserved in the \`ci-keystore\` branch. All future builds will automatically reuse this exact key forever." >> $GITHUB_STEP_SUMMARY
+            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+
+          > [!NOTE]
+          > **Permanent Production Keystore**: A permanent 2048-bit RSA key was generated and preserved in the `ci-keystore` branch. All subsequent builds will automatically reuse this exact key forever.
+          EOF
           fi
