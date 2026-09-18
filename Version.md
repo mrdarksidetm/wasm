@@ -695,3 +695,19 @@
 
 ### Status
 - 100% Implemented & Verified; all XML drawables structurally balanced and validated.
+---
+
+## [0.6.7] - 2026-09-18 10:05:00
+### Streamlined Step Summary & Direct Download Badge Integration
+- **Direct Download Badge Asset Integration**:
+  - Integrated custom SVG badge `assests/images/Direct Link Frame Badge.svg` into repository and CI distribution pipelines.
+  - Centered download trigger button with fixed `height="100"` targeting direct APK binary release download (`wasm-universal-release.apk`).
+- **Workflow Run Summary Optimization**:
+  - Eliminated cluttered multi-column tables from Step Summary in `.github/workflows/main.yml`.
+  - Added GFM `> [!NOTE]` informational callout clarifying that GitHub Actions automatically packages native artifact downloads in `.zip` containers, directing users to the centered SVG badge for the standalone `.apk`.
+  - Relocated secondary diagnostic artifacts (`wasm-universal-release.apk.sha256`, `latest-apk` portal, `gradle-build-log`, `android-lint-report`, `unit-test-results`) cleanly underneath the primary action.
+  - Consolidated architecture specifications and feature highlights into clean, collapsible `<details>` blocks to keep the build dashboard pristine and focused.
+  - Mirrored centered SVG badge and GFM note callout in `README.md`.
+
+### Status
+- 100% Implemented & Verified; committing and pushing to GitHub.

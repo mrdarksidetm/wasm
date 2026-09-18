@@ -4,17 +4,19 @@ A modern, high-performance Android application built with **Jetpack Compose** an
 
 ## 📱 Download Latest Production APK
 
-> ⚡ **DIRECT STANDALONE APK (NO UNZIPPING REQUIRED)**:
-> 
-> ⬇️ **[Download wasm-universal-release.apk](https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-universal-release.apk)**
-> 
-> 🔍 **[Download SHA-256 Checksum](https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-universal-release.apk.sha256)**
-> 
-> 📦 **[Browse GitHub Releases](https://github.com/mrdarksidetm/wasm/releases/tag/latest-apk)**
+<p align="center">
+  <a href="https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-universal-release.apk">
+    <img src="assests/images/Direct%20Link%20Frame%20Badge.svg" alt="Direct APK Download" height="100" />
+  </a>
+</p>
 
-### ⚠️ Important Download Notice (APK vs Zip)
-- **Direct Link / Releases**: Always download the APK directly from the **[GitHub Releases](https://github.com/mrdarksidetm/wasm/releases/tag/latest-apk)** link above. This provides the pure, raw `.apk` binary directly without any extraction needed.
-- **GitHub Actions "Artifacts" Section**: If you download builds via the "Artifacts" table on the GitHub Actions workflow summary page, GitHub's web interface **automatically packages all artifacts into a `.zip` archive**. This is a built-in behavior of GitHub's web platform. Simply use the Direct Download link above for the pure `.apk`.
+> [!NOTE]
+> **Direct Standalone APK (No Unzipping Required)**:
+> Click the **Direct Download** button above to download `wasm-universal-release.apk` directly to your phone/device ready to install.
+> If downloading via the GitHub Actions "Artifacts" table at the bottom of the workflow page, GitHub automatically packages all artifacts into `.zip` archives. Use the direct link above for the pure `.apk`.
+
+- 🔒 **SHA-256 Checksum**: [wasm-universal-release.apk.sha256](https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-universal-release.apk.sha256)
+- 📦 **GitHub Releases Portal**: [Browse `latest-apk` Release](https://github.com/mrdarksidetm/wasm/releases/tag/latest-apk)
 
 ---
 
