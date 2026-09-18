@@ -674,3 +674,24 @@
 
 ### Status
 - 100% Implemented & Verified; committing and pushing to GitHub.
+---
+
+## [0.6.6] - 2026-09-18 09:25:00
+### Unmorphed Adaptive App Icon Architecture Overhaul
+- **Root Cause Resolution for Morphed App Icon**:
+  - Identified severe coordinate distortion and manual vertex warp in previous `ic_launcher_foreground.xml` and legacy `Wasm - Original AppIcon.svg` (which had abnormal Y vertices extending up to 144.22 and negative X down to -19.40).
+  - Purged all old, morphed launcher icon XML assets from `res/drawable/` and `res/mipmap-anydpi-v26/`.
+- **Mathematical Transformation & Safe Area Alignment**:
+  - Integrated user's new pristine vector assets: `Background.svg` (108x108 at X=0, Y=0) and `Foreground.svg` (Width=83.18, Height=85.68 at X=-0.5, Y=25.32).
+  - Translated all 15 SVG foreground paths and gradient bounding anchors with sub-pixel precision (`dx = -0.5`, `dy = +25.32`) into the native 108dp x 108dp adaptive icon viewport canvas.
+  - Centered hero core star shape precisely at (53.6, 53.6), perfectly nested within Android's 66dp/72dp safe area circle mask.
+  - Anchored polygonal accent shard to the bottom edge (`Y = 108dp`) and left edge (`X = -0.5dp`), allowing decorative sparkles to overflow naturally beyond the 108dp frame without causing distortion or clipping artifacts.
+- **Direct Viewport Gradient Alignment**:
+  - Baked transformations directly into path coordinates and `aapt:attr` gradient vectors (`startX`, `startY`, `endX`, `endY`) in root viewport coordinates (108x108), bypassing Android's known `VectorDrawable` limitation where group translations fail to transform child gradient vectors.
+  - Reconstructed `res/drawable/ic_launcher_background.xml` with two-stop linear gradient (`#758AEF` at 0.087 to `#062362` at 0.806).
+  - Reconstructed `res/drawable/ic_launcher_foreground.xml` containing the 15 unmorphed vector paths (linear-gradient accent shard, `#E5EB2B` neon outer star, two-stop core star gradient `#758AEF` to `#062362`, and 12 white sparkle stars at 72% opacity).
+  - Reconstructed `res/mipmap-anydpi-v26/ic_launcher.xml` cleanly coupling background and foreground drawables.
+  - Updated composite master SVG `assests/app-icons/Wasm - Original AppIcon.svg` (108x108) with the exact unmorphed composition.
+
+### Status
+- 100% Implemented & Verified; all XML drawables structurally balanced and validated.
