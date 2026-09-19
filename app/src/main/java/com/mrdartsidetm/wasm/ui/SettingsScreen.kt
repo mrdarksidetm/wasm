@@ -431,7 +431,7 @@ fun SettingsScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Version 0.6.9 • Abhijeet Yadav",
+                                text = "Version 0.7.0 • Abhijeet Yadav",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )

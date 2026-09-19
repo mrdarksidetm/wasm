@@ -743,3 +743,24 @@
 
 ### Status
 - 100% Implemented & Verified; committing and pushing to GitHub for automated build and release.
+
+---
+
+## [0.7.0] - 2026-09-19 21:30:00
+### Official Vector Brand Logos & Footer Polish
+- **Official Vector Logos Integration**:
+  - Integrated official Android vector logo `app/src/main/res/drawable/ic_android_logo.xml` (512x512, #3DDC84 with transparent cutouts) and official 22-path Jetpack Compose vector logo `app/src/main/res/drawable/ic_jetpack_compose_logo.xml` (128x128).
+  - Replaced "Jetpack Compose • Material 3 Expressive" text with authentic vector logos row: `[Android Logo] ✕ [Jetpack Compose Logo]` with 70% opacity and `tint = Color.Unspecified` to preserve pristine branding colors.
+- **Version Bump**:
+  - Bumped `versionCode` to 9 and `versionName` to "0.7.0" across `app/build.gradle.kts`, `AboutScreen.kt`, and `SettingsScreen.kt`.
+- **Files Created**:
+  - `app/src/main/res/drawable/ic_android_logo.xml`
+  - `app/src/main/res/drawable/ic_jetpack_compose_logo.xml`
+- **Files Modified**:
+  - `app/build.gradle.kts`
+  - `app/src/main/java/com/mrdartsidetm/wasm/ui/AboutScreen.kt`
+  - `app/src/main/java/com/mrdartsidetm/wasm/ui/SettingsScreen.kt`
+  - `Version.md`
+
+### Status
+- 100% Implemented & Verified; ready for remote build and GitHub Actions verification.
