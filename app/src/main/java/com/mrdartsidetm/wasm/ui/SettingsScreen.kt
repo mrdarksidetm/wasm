@@ -10,8 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,6 +48,7 @@ fun SettingsScreen(
     var showIdentityDialog by remember { mutableStateOf(false) }
     var newIdentityText by remember { mutableStateOf("") }
     var showCacheClearedToast by remember { mutableStateOf(false) }
+    var showAboutScreen by rememberSaveable { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
 
@@ -140,6 +141,13 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+ 
+    if (showAboutScreen) {
+        AboutScreen(
+            onBack = { showAboutScreen = false }
+        )
+        return
     }
 
     Scaffold(
@@ -391,6 +399,7 @@ fun SettingsScreen(
             )
 
             Card(
+                onClick = { showAboutScreen = true },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -400,11 +409,12 @@ fun SettingsScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.app_icon),
@@ -413,22 +423,28 @@ fun SettingsScreen(
                                 .size(48.dp)
                                 .clip(RoundedCornerShape(14.dp))
                         )
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Wasm",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Version 0.5.4 • Material 3 Expressive",
+                                text = "Version 0.6.8 • Abhijeet Yadav",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
+                        Icon(
+                            imageVector = Icons.Default.ArrowForwardIos,
+                            contentDescription = "Open About Screen",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
 
                     Text(
-                        text = "Wasm is a high-performance, native Android application designed to parse, store, and view exported chat archives from WhatsApp and Instagram completely offline with privacy guarantees.",
+                        text = "High-performance offline chat archive viewer. Tap to view developer profile, open-source specifications, and privacy guarantees.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

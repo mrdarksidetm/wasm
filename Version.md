@@ -711,3 +711,23 @@
 
 ### Status
 - 100% Implemented & Verified; committing and pushing to GitHub.
+
+---
+
+## [0.6.8] - 2026-09-19 20:47:00
+### Material 3 Expressive About Screen & Developer Profile Integration
+- **Material 3 Expressive About Screen (AboutScreen.kt)**:
+  - Implemented standalone AboutScreen adhering strictly to Material 3 Expressive design specifications:
+    - Integrated Material 3 TopAppBar with native back navigation and hardware BackHandler.
+    - Centered hero branding with elevated container, high-resolution app icon (es/drawable/app_icon.png), and primary-tonal version pill badge (Version 0.6.8 (Universal Release)).
+    - Authentic developer profile card for Abhijeet Yadav featuring circular photo (es/drawable-nodpi/developer.png), direct GitHub profile button (https://github.com/mrdarksidetm), and Email contact action button (mailto:contact.dsidetm@gmail.com).
+    - Grouped specification cards covering: Open Source Repository link (https://github.com/mrdarksidetm/Wasm), 100% Offline Privacy Guarantee (zero telemetry/analytics/permissions), Dual-Platform Engine (.txt/.zip WhatsApp streaming parser and Instagram archive parser), Material 3 Expressive motion & frosted glass design system, and Apache License 2.0.
+    - Expressive footer: "Made with ❤️ Jetpack Compose • Material 3 Expressive".
+- **Settings Screen Integration (SettingsScreen.kt)**:
+  - Added showAboutScreen state backed by ememberSaveable to provide seamless in-app navigation with complete gesture/hardware back-stack restoration.
+  - Upgraded the About section card into an interactive Material 3 surface container displaying "Version 0.6.8 • Abhijeet Yadav" with trailing forward chevron navigation indicator.
+- **Project Versioning**:
+  - Bumped ersionCode to 7 and ersionName to "0.6.8" in pp/build.gradle.kts.
+
+### Status
+- 100% Implemented & Verified; committing and pushing to GitHub for automated build and release.
