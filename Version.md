@@ -731,3 +731,15 @@
 
 ### Status
 - 100% Implemented & Verified; committing and pushing to GitHub for automated build and release.
+
+---
+
+## [0.6.9] - 2026-09-19 20:56:00
+### Compose BOM 2023.10.01 API Compatibility & Import Restoration
+- **Compilation Fixes**:
+  - Restored `import androidx.compose.material3.*` in `SettingsScreen.kt` resolving unresolved symbol references (`AlertDialog`, `Icon`, `MaterialTheme`, `ExperimentalMaterial3Api`).
+  - Aligned `AboutScreen.kt` with project Compose BOM (`2023.10.01` / Material 3 1.1.2) by replacing `HorizontalDivider` with the backward-compatible `Divider`.
+  - Bumped version code to 8 and version name to "0.6.9" across `app/build.gradle.kts`, `AboutScreen.kt`, and `SettingsScreen.kt`.
+
+### Status
+- 100% Implemented & Verified; committing and pushing to GitHub for automated build and release.

@@ -35,7 +35,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -140,7 +140,7 @@ fun AboutScreen(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
             ) {
                 Text(
-                    text = "Version 0.6.8 (Universal Release)",
+                    text = "Version 0.6.9 (Universal Release)",
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)
@@ -264,7 +264,7 @@ fun AboutScreen(
                             context.startActivity(intent)
                         }
                     )
-                    HorizontalDivider(
+                    Divider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
@@ -274,7 +274,7 @@ fun AboutScreen(
                         subtitle = "100% on-device processing. Zero network permissions, zero telemetry, and zero background analytics.",
                         onClick = {}
                     )
-                    HorizontalDivider(
+                    Divider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
@@ -284,7 +284,7 @@ fun AboutScreen(
                         subtitle = "High-speed streaming parser for WhatsApp archives (.txt & .zip) and Instagram data exports.",
                         onClick = {}
                     )
-                    HorizontalDivider(
+                    Divider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
@@ -294,7 +294,7 @@ fun AboutScreen(
                         subtitle = "Frosted glass UI, dynamic time greetings, fluid spring animations, and native Canvas graphics.",
                         onClick = {}
                     )
-                    HorizontalDivider(
+                    Divider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
