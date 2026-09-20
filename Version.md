@@ -783,3 +783,16 @@
 
 ### Status
 - 100% Implemented & Verified.
+
+---
+
+## [0.7.2] - 2026-09-20 11:07:00
+### CI Badge Alignment & Vector-Drawable GitHub Page Deployment
+- **Status:** Completed & Deployed
+- **Updates**:
+  - Aligned CI build status badge in `README.md` to point accurately to `main.yml` (`https://github.com/mrdarksidetm/wasm/actions/workflows/main.yml`), reflecting the active Android CI / Production Build workflow.
+  - Built dedicated GitHub Pages landing site in `docs/index.html` adopting the **Vector Drawable** dark Material 3 Expressive design language with direct universal APK download, release notes browser, feature cards, and architectural specifications.
+- **Files Modified / Created**:
+  - `README.md`
+  - `docs/index.html`
+  - `Version.md`

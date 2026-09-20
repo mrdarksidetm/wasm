@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Wasm — Android Chat Archive Visualizer</title>
+  <meta name="description" content="Offline-first WhatsApp and Instagram chat archive manager and multimedia visualizer built with Jetpack Compose and Material 3 Expressive." />
+
+  <!-- Fonts: DM Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --vd-color-bg: #121212;
+      --vd-color-surface: #1e1e1e;
+      --vd-color-surface-elevated: #262626;
+      --vd-color-surface-hover: #2c2c2c;
+      --vd-color-stroke: rgba(255, 255, 255, 0.08);
+      --vd-color-stroke-strong: rgba(255, 255, 255, 0.18);
+      --vd-color-text: rgba(255, 255, 255, 0.88);
+      --vd-color-secondary-text: rgba(255, 255, 255, 0.52);
+      --vd-color-primary: #269bff;
+      --vd-color-light-primary: #37a3ff;
+      --vd-color-primary-container: rgba(38, 155, 255, 0.12);
+      --vd-color-success: #3ddc84;
+      --vd-size-corner-radius: 24px;
+      --vd-size-pill-radius: 9999px;
+      --vd-font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --vd-font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; min-height: 100vh;
+      background-color: var(--vd-color-bg);
+      color: var(--vd-color-text);
+      font-family: var(--vd-font-sans);
+      overflow-x: hidden; -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    .vd-glow-bg {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .vd-glow-blob {
+      position: absolute; top: -100px; left: 20%;
+      width: 650px; height: 650px;
+      background: radial-gradient(circle, rgba(38, 155, 255, 0.09) 0%, rgba(18, 18, 18, 0) 70%);
+      filter: blur(85px);
+    }
+
+    .container {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 1080px;
+      margin: 0 auto; padding: 0 24px;
+      display: flex; flex-direction: column;
+    }
+
+    /* Navbar */
+    header.vd-navbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0; border-bottom: 1px solid var(--vd-color-stroke);
+      margin-bottom: 48px;
+    }
+    .vd-brand { display: flex; align-items: center; gap: 14px; text-decoration: none; color: #ffffff; }
+    .vd-brand-logo {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: var(--vd-color-surface); border: 1px solid var(--vd-color-stroke);
+      padding: 6px; display: flex; align-items: center; justify-content: center;
+    }
+    .vd-brand-logo img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+    .vd-brand-name { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+    .vd-brand-badge {
+      font-family: var(--vd-font-mono); font-size: 11px; font-weight: 700;
+      color: var(--vd-color-primary); background: var(--vd-color-primary-container);
+      padding: 2px 8px; border-radius: var(--vd-size-pill-radius);
+      border: 1px solid rgba(38, 155, 255, 0.2);
+    }
+    .vd-nav-links { display: flex; align-items: center; gap: 16px; }
+    .vd-nav-link { font-size: 14px; font-weight: 600; color: var(--vd-color-secondary-text); text-decoration: none; }
+    .vd-nav-link:hover { color: #ffffff; }
+
+    /* Hero */
+    .vd-hero { padding: 20px 0 48px; text-align: left; }
+    .vd-hero-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--vd-font-mono); font-size: 12px; font-weight: 700;
+      color: var(--vd-color-primary); background: var(--vd-color-primary-container);
+      border: 1px solid rgba(38, 155, 255, 0.25);
+      padding: 6px 14px; border-radius: var(--vd-size-pill-radius);
+      margin-bottom: 20px; text-transform: uppercase;
+    }
+    .vd-hero-title {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 800; letter-spacing: -0.03em;
+      line-height: 1.12; color: #ffffff; margin-bottom: 16px;
+    }
+    .vd-hero-title span.accent { color: var(--vd-color-primary); font-style: italic; }
+    .vd-hero-desc {
+      max-width: 720px; font-size: 17px;
+      color: var(--vd-color-secondary-text); font-weight: 500;
+      line-height: 1.6; margin-bottom: 32px;
+    }
+    .vd-hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 48px; }
+    .vd-btn-dl {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 24px; font-size: 14px; font-weight: 800;
+      border-radius: var(--vd-size-pill-radius);
+      background: var(--vd-color-primary); color: #ffffff;
+      text-decoration: none; transition: all 0.2s ease;
+      box-shadow: 0 4px 20px rgba(38, 155, 255, 0.3);
+    }
+    .vd-btn-dl:hover { background: var(--vd-color-light-primary); transform: scale(1.02); }
+    .vd-btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 22px; font-size: 14px; font-weight: 700;
+      border-radius: var(--vd-size-pill-radius);
+      background: var(--vd-color-surface); border: 1px solid var(--vd-color-stroke-strong);
+      color: #ffffff; text-decoration: none; transition: all 0.2s ease;
+    }
+    .vd-btn-ghost:hover { background: var(--vd-color-surface-hover); border-color: var(--vd-color-primary); }
+
+    /* Features Grid */
+    .vd-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px; margin-bottom: 48px;
+    }
+    .vd-feature-card {
+      background: var(--vd-color-surface);
+      border: 1px solid var(--vd-color-stroke);
+      border-radius: var(--vd-size-corner-radius);
+      padding: 28px; transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .vd-feature-card:hover { transform: translateY(-4px); border-color: rgba(38, 155, 255, 0.3); }
+    .vd-feature-icon { font-size: 28px; margin-bottom: 12px; }
+    .vd-feature-title { font-size: 18px; font-weight: 800; color: #ffffff; margin-bottom: 8px; }
+    .vd-feature-desc { font-size: 14px; color: var(--vd-color-secondary-text); line-height: 1.6; }
+
+    /* Specs Table */
+    .vd-specs-card {
+      background: var(--vd-color-surface);
+      border: 1px solid var(--vd-color-stroke);
+      border-radius: var(--vd-size-corner-radius);
+      padding: 32px; margin-bottom: 48px; overflow-x: auto;
+    }
+    .vd-specs-title { font-size: 20px; font-weight: 800; color: #ffffff; margin-bottom: 18px; }
+    table.vd-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.vd-table th, table.vd-table td {
+      padding: 12px 16px; text-align: left;
+      border-bottom: 1px solid var(--vd-color-stroke);
+    }
+    table.vd-table th { color: var(--vd-color-secondary-text); font-family: var(--vd-font-mono); font-size: 12px; }
+    table.vd-table td { color: var(--vd-color-text); }
+
+    /* Footer */
+    footer.vd-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; padding: 24px 0 48px;
+      border-top: 1px solid var(--vd-color-stroke);
+      color: var(--vd-color-secondary-text); font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="vd-glow-bg"><div class="vd-glow-blob"></div></div>
+
+  <div class="container">
+    <header class="vd-navbar">
+      <a href="https://mrdarksidetm.github.io/" class="vd-brand">
+        <div class="vd-brand-logo">
+          <img src="../assests/app-icons/Wasm%20-%20Original%20AppIcon.png" alt="Wasm Icon" />
+        </div>
+        <div class="vd-brand-name">Wasm</div>
+        <span class="vd-brand-badge">v0.7.0</span>
+      </a>
+      <nav class="vd-nav-links">
+        <a href="https://mrdarksidetm.github.io/" class="vd-nav-link">← Atelier Hub</a>
+        <a href="https://github.com/mrdarksidetm/wasm" target="_blank" rel="noopener noreferrer" class="vd-btn-ghost">GitHub</a>
+      </nav>
+    </header>
+
+    <section class="vd-hero">
+      <div class="vd-hero-chip">💬 Offline Chat Archives • 100% Privacy</div>
+      <h1 class="vd-hero-title">
+        Relive Conversations with <span class="accent">Zero Cloud</span> Intrusion.
+      </h1>
+      <p class="vd-hero-desc">
+        A high-performance Android utility built with Jetpack Compose and Material 3 Expressive for managing and visualizing WhatsApp and Instagram chat archives offline. Zero internet permissions, in-app audio playback, and SAF media export.
+      </p>
+      <div class="vd-hero-actions">
+        <a href="https://github.com/mrdarksidetm/wasm/releases/download/latest-apk/wasm-universal-release.apk" class="vd-btn-dl">
+          ↓ Download Universal Release APK
+        </a>
+        <a href="https://github.com/mrdarksidetm/wasm/releases/tag/latest-apk" target="_blank" rel="noopener noreferrer" class="vd-btn-ghost">
+          Browse Release Notes
+        </a>
+        <a href="https://github.com/mrdarksidetm/wasm" target="_blank" rel="noopener noreferrer" class="vd-btn-ghost">
+          View Source Code
+        </a>
+      </div>
+    </section>
+
+    <div class="vd-grid">
+      <div class="vd-feature-card">
+        <div class="vd-feature-icon">💬</div>
+        <div class="vd-feature-title">WhatsApp & Instagram Parsers</div>
+        <div class="vd-feature-desc">Full-fidelity parsing of WhatsApp .txt chat exports and official Instagram ZIP/HTML data archives into offline Room SQLite storage.</div>
+      </div>
+      <div class="vd-feature-card">
+        <div class="vd-feature-icon">🎵</div>
+        <div class="vd-feature-title">Embedded Audio Player</div>
+        <div class="vd-feature-desc">In-app audio playback manager for voice notes, memos, and sound clips directly within the conversation thread timeline.</div>
+      </div>
+      <div class="vd-feature-card">
+        <div class="vd-feature-icon">🖼️</div>
+        <div class="vd-feature-title">Zero-Permission Media Export</div>
+        <div class="vd-feature-desc">Safely export photos, videos, and documents to device gallery via Storage Access Framework (SAF) without requesting blanket storage permissions.</div>
+      </div>
+      <div class="vd-feature-card">
+        <div class="vd-feature-icon">🎨</div>
+        <div class="vd-feature-title">Material 3 Expressive Glassmorphism</div>
+        <div class="vd-feature-desc">Pristine blank canvas home screen, dynamic time-of-day greetings, and multi-layer frosted glass card with organic animated message count.</div>
+      </div>
+      <div class="vd-feature-card">
+        <div class="vd-feature-icon">👤</div>
+        <div class="vd-feature-title">Modern Android Photo Picker</div>
+        <div class="vd-feature-desc">Personalize your profile identity using the system Android Photo Picker flow with zero runtime permission popups.</div>
+      </div>
+      <div class="vd-feature-card">
+        <div class="vd-feature-icon">🛡️</div>
+        <div class="vd-feature-title">Zero Network Access</div>
+        <div class="vd-feature-desc">Absolutely no INTERNET permission declared in AndroidManifest.xml. Zero telemetry, zero analytics, and 100% device isolation.</div>
+      </div>
+    </div>
+
+    <div class="vd-specs-card">
+      <div class="vd-specs-title">Architectural Specifications</div>
+      <table class="vd-table">
+        <tr><th>Platform</th><td>Native Android (100% Kotlin & Jetpack Compose)</td></tr>
+        <tr><th>Target / Min SDK</th><td>Android 14 (API 34) / Android 8.0 (API 26)</td></tr>
+        <tr><th>Design Language</th><td>Material 3 Expressive (Layered glassmorphism, dynamic color)</td></tr>
+        <tr><th>Local Database</th><td>Room (SQLite) with KSP</td></tr>
+        <tr><th>Audio Playback</th><td>Integrated AudioPlayerManager (MediaPlayer API)</td></tr>
+        <tr><th>CI/CD Pipeline</th><td>GitHub Actions (main.yml) with automated production builds</td></tr>
+      </table>
+    </div>
+
+    <footer class="vd-footer">
+      <div>© 2026 Abhijeet Yadav (<b>MrDarksideTM</b>). Licensed under Apache 2.0.</div>
+      <div><a href="https://mrdarksidetm.github.io/" style="color: var(--vd-color-primary); text-decoration: none; font-weight: 700;">← Back to Atelier Hub</a></div>
+    </footer>
+  </div>
+</body>
+</html>

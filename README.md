@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mrdarksidetm/wasm/actions/workflows/build.yml"><img src="https://github.com/mrdarksidetm/wasm/actions/workflows/build.yml/badge.svg" alt="CI Build Status" /></a>
+  <a href="https://github.com/mrdarksidetm/wasm/actions/workflows/main.yml"><img src="https://github.com/mrdarksidetm/wasm/actions/workflows/main.yml/badge.svg" alt="CI Build Status" /></a>
   <a href="https://m3.material.io/"><img src="https://img.shields.io/badge/Design-Material_3_Expressive-0061A4?style=flat-square" alt="Material 3 Expressive" /></a>
   <a href="https://developer.android.com/jetpack/compose"><img src="https://img.shields.io/badge/UI-Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" /></a>
   <a href="https://developer.android.com/training/data-storage/room"><img src="https://img.shields.io/badge/Storage-Room_SQLite-3DDC84?style=flat-square&logo=sqlite&logoColor=white" alt="Room SQLite" /></a>
