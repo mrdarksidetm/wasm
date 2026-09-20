@@ -764,3 +764,22 @@
 
 ### Status
 - 100% Implemented & Verified; ready for remote build and GitHub Actions verification.
+
+---
+
+## [0.7.1] - 2026-09-20 10:50:00
+### Comprehensive README.md Documentation Synchronization
+- **Documentation Overhaul**:
+  - Synchronized `README.md` with all app features developed up through version 0.7.0.
+  - Documented multi-platform chat archive engine (WhatsApp text and media parsing, Instagram ZIP and HTML data export extraction, and `PlatformChooserScreen`).
+  - Documented native in-app audio and voice note player (`AudioPlayerManager`).
+  - Documented zero-permission media export and gallery downloader utilizing Android Storage Access Framework (SAF).
+  - Documented Material 3 Expressive UI architecture: layered glassmorphism, dynamic time greetings, organic message counter, and "Let's Personalize" photo picker flow.
+  - Documented `AboutScreen.kt` and authentic vector brand marks for Android and Jetpack Compose.
+  - Updated architectural specifications table, project directory structure, and release badges.
+- **Files Modified**:
+  - `README.md`
+  - `Version.md`
+
+### Status
+- 100% Implemented & Verified.
