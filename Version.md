@@ -796,3 +796,18 @@
   - `README.md`
   - `docs/index.html`
   - `Version.md`
+
+---
+
+## [0.7.3] - 2026-09-20 12:40:00
+### Standardized Vector SVG Logo & GitHub Branding Integration
+- **Status:** Completed & Deployed
+- **Updates**:
+  - Replaced raster / external asset reference with local crisp vector `docs/logo.svg` for the navbar toolbar brand logo.
+  - Added dedicated 64x64px hero squircle card displaying the vector logo alongside the page heading and title.
+  - Standardized logo display dimensions (26px toolbar, 44px hero) matching the global design system.
+  - Embedded official GitHub SVG logos beside all GitHub mentions in navbar, hero action buttons, architectural specs, and footer.
+- **Files Modified / Created**:
+  - `docs/logo.svg`
+  - `docs/index.html`
+  - `Version.md`
