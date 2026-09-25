@@ -1,0 +1,4 @@
+- Material 3 Expressive UI and dynamic time greetings.
+- Full-body frosted glass aesthetic with hardware accelerated rendering.
+- Offline chat archive management and local Room database caching.
+- F-Droid compatibility and Apache 2.0 open-source licensing.

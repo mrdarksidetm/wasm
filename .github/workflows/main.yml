@@ -198,7 +198,9 @@ jobs:
           if [ -n "$ORIGINAL_APK" ]; then
             cp "$ORIGINAL_APK" wasm-universal-release.apk
             sha256sum wasm-universal-release.apk > wasm-universal-release.apk.sha256
-            echo "Successfully packaged wasm-universal-release.apk"
+            cp "$ORIGINAL_APK" wasm-fdroid-universal.apk
+            sha256sum wasm-fdroid-universal.apk > wasm-fdroid-universal.apk.sha256
+            echo "Successfully packaged wasm-universal-release.apk and wasm-fdroid-universal.apk"
           else
             echo "Error: Release APK not found!" && exit 1
           fi
@@ -211,6 +213,7 @@ jobs:
           APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner 2>/dev/null | sort -V | tail -n 1)
           if [ -n "$APKSIGNER" ]; then
             $APKSIGNER verify --verbose "$APK_FILE"
+            $APKSIGNER verify --verbose "${APK_DIR}/wasm-fdroid-universal.apk"
             echo "✅ Production APK verified with v1 and v2/v3 signature schemes."
           else
             echo "apksigner not in path; verifying APK existence: OK"
@@ -223,11 +226,18 @@ jobs:
           path: app/build/outputs/apk/release/wasm-universal-release.apk
           retention-days: 30
 
-      - name: Upload SHA256 Checksum (Actions Artifact)
+      - name: Upload F-Droid Universal APK (Actions Artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: wasm-universal-release-sha256
-          path: app/build/outputs/apk/release/wasm-universal-release.apk.sha256
+          name: wasm-fdroid-universal-apk
+          path: app/build/outputs/apk/release/wasm-fdroid-universal.apk
+          retention-days: 30
+
+      - name: Upload SHA256 Checksums (Actions Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-checksums
+          path: app/build/outputs/apk/release/*.sha256
           retention-days: 30
 
       - name: Publish Direct-Download Standalone APK to GitHub Releases (Pure APK, No Zip)
@@ -246,18 +256,23 @@ jobs:
             --title "Wasm Production Universal Release (Direct Download)" \
             --notes "### 📱 Direct Standalone Download (No Unzipping Required)
           - **Production APK:** [wasm-universal-release.apk](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-universal-release.apk)
-          - **SHA-256 Checksum:** [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-universal-release.apk.sha256)
+          - **F-Droid Universal APK:** [wasm-fdroid-universal.apk](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-fdroid-universal.apk)
+          - **SHA-256 Checksums:** [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/$TAG/wasm-universal-release.apk.sha256)
 
           Click the APK link directly to download and test without extracting any zip files!" \
             --target "$GITHUB_SHA" \
             app/build/outputs/apk/release/wasm-universal-release.apk \
-            app/build/outputs/apk/release/wasm-universal-release.apk.sha256; then
+            app/build/outputs/apk/release/wasm-universal-release.apk.sha256 \
+            app/build/outputs/apk/release/wasm-fdroid-universal.apk \
+            app/build/outputs/apk/release/wasm-fdroid-universal.apk.sha256; then
             echo "Release create failed or already exists; uploading assets with --clobber..."
             gh release upload "$TAG" \
               --repo "$GITHUB_REPOSITORY" \
               --clobber \
               app/build/outputs/apk/release/wasm-universal-release.apk \
-              app/build/outputs/apk/release/wasm-universal-release.apk.sha256
+              app/build/outputs/apk/release/wasm-universal-release.apk.sha256 \
+              app/build/outputs/apk/release/wasm-fdroid-universal.apk \
+              app/build/outputs/apk/release/wasm-fdroid-universal.apk.sha256
           fi
 
       - name: Upload Permanent Production Keystore Artifact
@@ -288,7 +303,8 @@ jobs:
           ---
 
           ### 📦 Build Artifacts & Downloads
-          - 📱 **Direct Standalone APK**: [**wasm-universal-release.apk**](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk) *(Pure `.apk`, no unzipping required)*
+          - 📱 **Universal Standalone APK**: [**wasm-universal-release.apk**](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk) *(Pure `.apk`, no unzipping required)*
+          - 🤖 **F-Droid Universal APK**: [**wasm-fdroid-universal.apk**](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-fdroid-universal.apk)
           - 🔒 **SHA-256 Checksum**: [wasm-universal-release.apk.sha256](https://github.com/${{ github.repository }}/releases/download/latest-apk/wasm-universal-release.apk.sha256)
           - 🏷️ **GitHub Releases Portal**: [`latest-apk` Release Page](https://github.com/${{ github.repository }}/releases/tag/latest-apk)
           - 📄 **Gradle Build Log**: `gradle-build-log` *(Available in the Artifacts section below)*

@@ -1,0 +1,32 @@
+Categories:
+  - Multimedia
+  - Utilities
+License: Apache-2.0
+AuthorName: Abhijeet Yadav
+AuthorEmail: mrdarksidetm@gmail.com
+SourceCode: https://github.com/mrdarksidetm/wasm
+IssueTracker: https://github.com/mrdarksidetm/wasm/issues
+Changelog: https://github.com/mrdarksidetm/wasm/releases
+
+AutoName: Wasm
+Summary: Offline chat archive visualizer and player
+Description: |-
+  Wasm is an offline-first Android application built with Jetpack Compose and
+  Material 3 Expressive for chat archive visualization, communication history
+  analytics, and multimedia playback without cloud tracking.
+
+RepoType: git
+Repo: https://github.com/mrdarksidetm/wasm.git
+
+Builds:
+  - versionName: 0.7.0
+    versionCode: 9
+    commit: latest-apk
+    subdir: app
+    gradle:
+      - assembleRelease
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.7.0
+CurrentVersionCode: 9

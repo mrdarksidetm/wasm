@@ -1,0 +1,8 @@
+Wasm is a modern, high-performance, offline-first Android application built with Jetpack Compose and Material 3 Expressive for chat archive visualization, communication history analytics, and multimedia playback.
+
+Features:
+- Offline Chat Visualizer: Parse, index, and browse exported chat archives entirely offline without uploading personal conversations to the cloud.
+- Material 3 Expressive Design: Features edge-to-edge window insets, dynamic time-aware greetings, full-body frosted glass cards with RenderEffect hardware acceleration, and dynamic color.
+- Zero Broad Permissions: Utilizes the system Photo Picker and Storage Access Framework (SAF), requiring zero broad storage permissions.
+- Fast Local SQLite Storage: Powered by Room SQLite and DataStore for instantaneous queries and search across large conversational transcripts.
+- 100% Privacy & Security: No internet connection required, zero trackers, zero analytics, and zero proprietary libraries.

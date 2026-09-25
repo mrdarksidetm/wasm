@@ -811,3 +811,23 @@
   - `docs/logo.svg`
   - `docs/index.html`
   - `Version.md`
+
+---
+
+## [0.7.4] - 2026-09-25 10:30:00
+### F-Droid Universal APK Packaging, Licensing & Compliance Integration
+- **Status:** Completed & Integrated
+- **Updates:**
+  - Added official standalone Apache 2.0 license file (`LICENSE`) resolving license badge reference and establishing full FOSS compliance for repository inclusion.
+  - Enhanced GitHub Actions workflow (`.github/workflows/main.yml`) to package, verify signatures for, and upload dedicated `wasm-fdroid-universal.apk` and sha256 checksums alongside standard release binaries.
+  - Added F-Droid universal release asset distribution directly to GitHub Releases portal publish step.
+  - Structured standardized Fastlane upstream metadata (`fastlane/metadata/android/en-US/`) with `short_description.txt`, `full_description.txt`, and `changelogs/9.txt`.
+  - Added official F-Droid packaging build recipe template (`metadata/com.mrdartsidetm.wasm.yml`) ready for upstream `fdroiddata` submission.
+- **Files Modified:**
+  - `.github/workflows/main.yml`
+- **Files Created:**
+  - `LICENSE`
+  - `fastlane/metadata/android/en-US/short_description.txt`
+  - `fastlane/metadata/android/en-US/full_description.txt`
+  - `fastlane/metadata/android/en-US/changelogs/9.txt`
+  - `metadata/com.mrdartsidetm.wasm.yml`
